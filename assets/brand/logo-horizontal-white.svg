@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 64" role="img" aria-label="Ortic">
+  <circle cx="32" cy="32" r="32" fill="#0B0F14"/>
+  <g transform="translate(8.5 7) scale(0.47)" fill="none" stroke="#3CC8BE" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M50 22C43 16 31 14 24 21C17 28 18 40 22 51C25 60 27 71 30 80C32 86 38 87 40 81C42 74 44 66 50 66C56 66 58 74 60 81C62 87 68 86 70 80C73 71 75 60 78 51C82 40 83 28 76 21C69 14 57 16 50 22Z"/>
+    <path d="M37 42Q50 53 63 42"/>
+  </g>
+  <text x="76" y="42" font-family="Poppins, 'Segoe UI', Arial, sans-serif" font-weight="700" font-size="30" letter-spacing="5" fill="#FFFFFF">ORTIC</text>
+</svg>

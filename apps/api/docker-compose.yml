@@ -1,0 +1,16 @@
+# MySQL untuk development lokal: `docker compose up -d`
+services:
+  mysql:
+    image: mysql:8.4
+    container_name: ortic-api-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-secret}
+      MYSQL_DATABASE: ${DB_DATABASE:-ortic}
+    ports:
+      - "${DB_PORT:-3306}:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+volumes:
+  mysql-data:

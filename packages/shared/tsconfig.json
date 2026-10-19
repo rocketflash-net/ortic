@@ -1,0 +1,4 @@
+{
+  "extends": "@ortic/tsconfig/base.json",
+  "include": ["src"]
+}

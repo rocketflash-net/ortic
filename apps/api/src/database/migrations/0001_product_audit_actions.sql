@@ -1,0 +1,1 @@
+ALTER TABLE `audit_logs` MODIFY COLUMN `action` enum('user.role_updated','warehouse.created','warehouse.updated','product.created','product.updated','product.status_updated','brand.created') NOT NULL;

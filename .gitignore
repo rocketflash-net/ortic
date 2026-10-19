@@ -1,0 +1,13 @@
+node_modules/
+dist/
+.turbo/
+.astro/
+.env
+.env.*
+!.env.example
+*.log
+.DS_Store
+
+
+# File upload driver storage local (STORAGE_DRIVER=local, apps/api)
+/storage

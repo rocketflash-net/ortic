@@ -1,0 +1,14 @@
+/node_modules
+/build
+.env
+.env.*
+!.env.example
+npm-debug.log*
+yarn-error.log*
+.DS_Store
+/.idea
+/.vscode
+/.fleet
+
+# Key RSA BatPay (BATPAY_*_KEY_PATH)
+/keys
