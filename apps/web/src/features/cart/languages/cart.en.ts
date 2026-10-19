@@ -1,0 +1,17 @@
+export default {
+  title: "Cart",
+  empty_title: "Your cart is empty",
+  empty_description: "Pick the instruments you need.",
+  shop: "Start shopping",
+  remove: "Remove",
+  quantity: "Quantity",
+  summary: "Summary",
+  items: "{count} items",
+  weight: "Estimated weight",
+  subtotal: "Subtotal",
+  shipping: "Shipping",
+  shipping_later: "Calculated at checkout",
+  checkout: "Checkout",
+  checkout_note: "Pay with QRIS. Shipping is calculated at checkout.",
+  clear: "Empty cart",
+}

@@ -1,0 +1,11 @@
+{
+  "name": "@ortic/shared",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "devDependencies": {
+    "@ortic/tsconfig": "*"
+  }
+}

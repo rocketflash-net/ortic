@@ -1,0 +1,17 @@
+export default {
+  title: "Keranjang",
+  empty_title: "Keranjang masih kosong",
+  empty_description: "Yuk, pilih alat yang dibutuhkan.",
+  shop: "Mulai belanja",
+  remove: "Hapus",
+  quantity: "Jumlah",
+  summary: "Ringkasan",
+  items: "{count} barang",
+  weight: "Perkiraan berat",
+  subtotal: "Subtotal",
+  shipping: "Ongkir",
+  shipping_later: "Dihitung saat checkout",
+  checkout: "Checkout",
+  checkout_note: "Bayar dengan QRIS. Ongkir dihitung di halaman checkout.",
+  clear: "Kosongkan keranjang",
+}

@@ -1,0 +1,108 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+
+@theme {
+  --font-sans: "Poppins", sans-serif;
+  /* Judul bergaya poster (feed Instagram Ortic). Jangan dipakai di bawah 20px. */
+  --font-display: "Bangers", Impact, sans-serif;
+
+  /* Warna brand Ortic (docs/PRD.md bagian Tema visual). */
+  --color-ortic-blue: #1438c8;
+  --color-ortic-yellow: #ffd21f;
+  --color-ortic-red: #d7192a;
+  --color-ortic-ink: #111318;
+  --color-ortic-teal: #3cc8be;
+
+  /* Tombol & kartu gaya komik: bayangan tegas tanpa blur. */
+  --shadow-comic: 3px 3px 0 0 #111318;
+  --shadow-comic-lg: 5px 5px 0 0 #111318;
+}
+
+/* Palet untuk Nuxt UI. `static` selalu mengeluarkan variabel karena Nuxt UI membacanya saat runtime. */
+@theme static {
+  /* Biru Ortic — warna utama (brand #1438C8 = 700). */
+  --color-ortic-50: #eef2ff;
+  --color-ortic-100: #dbe3fe;
+  --color-ortic-200: #bccafd;
+  --color-ortic-300: #8ea6fa;
+  --color-ortic-400: #5a78f2;
+  --color-ortic-500: #3354e6;
+  --color-ortic-600: #1f40d6;
+  --color-ortic-700: #1438c8;
+  --color-ortic-800: #122ea0;
+  --color-ortic-900: #13297e;
+  --color-ortic-950: #0d1a4d;
+
+  /* Kuning Ortic — tombol aksi (brand #FFD21F = 400). Teks di atasnya selalu gelap. */
+  --color-sunny-50: #fffbea;
+  --color-sunny-100: #fff3c4;
+  --color-sunny-200: #ffe78a;
+  --color-sunny-300: #ffd94d;
+  --color-sunny-400: #ffd21f;
+  --color-sunny-500: #f5b800;
+  --color-sunny-600: #d18f00;
+  --color-sunny-700: #a66702;
+  --color-sunny-800: #89510a;
+  --color-sunny-900: #74430f;
+  --color-sunny-950: #432204;
+}
+
+:root,
+.light {
+  --ui-primary: var(--ui-color-primary-700);
+  --ui-secondary: var(--ui-color-secondary-400);
+  --ui-error: #d7192a;
+  --ui-bg: #ffffff;
+}
+
+.dark {
+  --ui-primary: var(--ui-color-primary-300);
+  --ui-secondary: var(--ui-color-secondary-300);
+  --ui-error: #f27a83;
+}
+
+@layer base {
+  body {
+    @apply font-sans;
+  }
+}
+
+@layer utilities {
+  /* Horizontal chip rows: scroll by swipe without a visible scrollbar. */
+  .scrollbar-none {
+    scrollbar-width: none;
+  }
+
+  .scrollbar-none::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Tekstur titik halftone di atas blok warna (opasitas 10%). */
+  .bg-halftone {
+    background-image: radial-gradient(rgb(0 0 0 / 0.1) 1px, transparent 1.5px);
+    background-size: 8px 8px;
+  }
+
+  .bg-halftone-light {
+    background-image: radial-gradient(rgb(255 255 255 / 0.14) 1px, transparent 1.5px);
+    background-size: 8px 8px;
+  }
+
+  /* Tombol aksi gaya komik: garis tepi 2px ink + bayangan tegas 3px. */
+  .btn-comic {
+    box-shadow: var(--shadow-comic);
+    outline: 2px solid var(--color-ortic-ink);
+    outline-offset: -2px;
+  }
+
+  .btn-comic:active {
+    box-shadow: none;
+    transform: translate(2px, 2px);
+  }
+
+  /* Foto produk tanpa latar: outline putih + bayangan, seperti postingan Instagram. */
+  .product-cutout {
+    filter: drop-shadow(0 0 0 #fff) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff)
+      drop-shadow(0 -2px 0 #fff) drop-shadow(4px 6px 6px rgb(0 0 0 / 0.25));
+  }
+}
