@@ -60,9 +60,22 @@ const NUMBER_KEYS = [
   "STORAGE_PRESIGN_EXPIRES_SECONDS",
   "QRIS_MDR_RATE",
   "QRIS_MDR_FREE_MAX",
+  "BITESHIP_TRACKING_INTERVAL_MS",
+  "BITESHIP_RATES_CACHE_TTL_MS",
+  "SHIPMENT_JOB_INTERVAL_MS",
 ] as const;
 
-const BOOLEAN_KEYS = ["AUTO_ACCEPT_ORDERS", "BITESHIP_MOCK_RATES", "USE_LOGGER", "USE_COMPRESSION", "USE_LIMITER", "DB_LOGGING", "SMTP_SECURE", "STORAGE_FORCE_PATH_STYLE"] as const;
+const BOOLEAN_KEYS = [
+  "AUTO_ACCEPT_ORDERS",
+  "BITESHIP_MOCK_RATES",
+  "BITESHIP_MOCK_ORDERS",
+  "USE_LOGGER",
+  "USE_COMPRESSION",
+  "USE_LIMITER",
+  "DB_LOGGING",
+  "SMTP_SECURE",
+  "STORAGE_FORCE_PATH_STYLE",
+] as const;
 
 const URL_KEYS = ["WEB_URL", "ADMIN_URL", "GOOGLE_REDIRECT_URI", "STORAGE_ENDPOINT", "STORAGE_PUBLIC_URL", "BATPAY_BASE_URL", "BITESHIP_BASE_URL"] as const;
 
@@ -94,7 +107,9 @@ const envSchema = z
     NODE_ENV: optional(z.enum(Object.values(EnvEnum) as [string, ...string[]])),
     LOG_LEVEL: optional(z.enum(["fatal", "error", "warn", "info", "debug", "trace", "silent"])),
     AUTH_DEV_LOGIN_CODE: optional(z.string().regex(/^\d{6}$/, "must be 6 digits")),
-    CORS_ORIGINS: optional(z.string().refine((value) => value.split(",").every((origin) => !origin.trim() || isHttpUrl(origin.trim())), "must be comma-separated http(s) URLs")),
+    CORS_ORIGINS: optional(
+      z.string().refine((value) => value.split(",").every((origin) => !origin.trim() || isHttpUrl(origin.trim())), "must be comma-separated http(s) URLs")
+    ),
     ...Object.fromEntries(NUMBER_KEYS.map((key) => [key, numberVar])),
     ...Object.fromEntries(BOOLEAN_KEYS.map((key) => [key, booleanVar])),
     ...Object.fromEntries(URL_KEYS.map((key) => [key, urlVar])),

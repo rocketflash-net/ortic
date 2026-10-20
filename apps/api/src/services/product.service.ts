@@ -17,12 +17,13 @@ import SettingRepository from "@repositories/setting.repository";
 import AuditLogService from "@services/audit-log.service";
 import { AuditActorType } from "@@types/audit.type";
 import { AuthUserType } from "@@types/auth.type";
-import { NewProductVariantType, ProductVariantType } from "@@types/entity.type";
+import { CategoryType, NewProductVariantType, ProductVariantType } from "@@types/entity.type";
 import { PaginationQueryType } from "@@types/pagination.type";
 import ResponseType from "@@types/response.type";
 import { randomCode, randomToken } from "@utils/crypto.util";
 import { buildPaginationMeta, toPaginationOptions } from "@utils/pagination.util";
 import { effectiveMarkup, sellingPrice } from "@utils/price.util";
+import { sanitizeDescription } from "@utils/html.util";
 import { slugify } from "@utils/slug.util";
 import { PresignProductImageInputType, ProductFilterType, SaveProductInputType, SaveVariantInputType } from "@validators/product.validator";
 
@@ -38,9 +39,9 @@ const IMAGE_RULES: Record<string, { extension: string; maxBytes: number }> = {
 const DEFAULT_MARKUP_PERCENT = 5;
 const DEFAULT_PRICE_ROUNDING = 500;
 
-type PricingContextType = { canSeeCost: boolean; productMarkup: number | null; globalMarkup: number; rounding: number };
+type PricingContextType = { canSeeCost: boolean; productMarkup: number | null; categoryMarkup: number | null; globalMarkup: number; rounding: number };
 
-type VariantPricingType = Pick<NewProductVariantType, "basePrice" | "markupPercent" | "price" | "priceLocked" | "compareAtPrice">;
+type VariantPricingType = Pick<NewProductVariantType, "basePrice" | "markupPercent" | "price" | "priceLocked" | "compareAtPrice" | "salePrice">;
 
 /**
  * Produk untuk dashboard admin: daftar, detail, simpan (info + foto + varian sekaligus), ubah status, upload foto, merek.
@@ -151,7 +152,12 @@ export default class ProductService extends Service {
       const repository = this.brandRepository.withTransaction(tx);
       if (await repository.findBySlug(slug)) throw new ConflictException(`Brand ${name} already exists`);
       const id = await repository.store({ name, slug });
-      await this.auditLogService.record(tx, actor, { action: AuditActionEnum.brand_created, targetType: "brand", targetId: id, metadata: { after: { name, slug } } });
+      await this.auditLogService.record(tx, actor, {
+        action: AuditActionEnum.brand_created,
+        targetType: "brand",
+        targetId: id,
+        metadata: { after: { name, slug } },
+      });
       return id;
     });
     return this.created(BrandDto.fromEntity((await this.brandRepository.findById(id))!), "Brand created");
@@ -160,7 +166,7 @@ export default class ProductService extends Service {
   // Simpan produk baru (id = null) atau ganti seluruh isi produk: info, foto, varian. Mengembalikan id produk.
   private async save(id: number | null, input: SaveProductInputType, user: AuthUserType, actor: AuditActorType): Promise<number> {
     const canSeeCost = hasPermission(user, PermissionEnum.prices_manage);
-    await this.assertReferences(input);
+    const category = await this.assertReferences(input);
     const [globalMarkup, rounding] = await Promise.all([
       this.settingRepository.getNumber("markup_percent", DEFAULT_MARKUP_PERCENT),
       this.settingRepository.getNumber("price_rounding", DEFAULT_PRICE_ROUNDING),
@@ -183,7 +189,7 @@ export default class ProductService extends Service {
       const slug = await this.resolveSlug(input.slug, input.name, id ?? undefined, repository);
       // Staf tidak bisa mengubah markup produk; undefined = tidak dikirim, pertahankan nilai lama.
       const productMarkup = canSeeCost && input.markup_percent !== undefined ? input.markup_percent : (before?.markupPercent ?? null);
-      const context: PricingContextType = { canSeeCost, productMarkup, globalMarkup, rounding };
+      const context: PricingContextType = { canSeeCost, productMarkup, categoryMarkup: category.markupPercent, globalMarkup, rounding };
 
       const variants = input.variants.map((variant, index) => ({
         input: variant,
@@ -212,11 +218,14 @@ export default class ProductService extends Service {
         brandId: input.brand_id,
         name: input.name,
         slug,
-        description: input.description,
+        description: sanitizeDescription(input.description),
         specifications: input.specifications,
         permitNumber: input.permit_number,
         isHazardous: input.is_hazardous,
         markupPercent: productMarkup,
+        // Periode promo ikut hak harga (Staf tidak bisa mengubahnya).
+        saleStartsAt: canSeeCost ? input.sale_starts_at : (before?.saleStartsAt ?? null),
+        saleEndsAt: canSeeCost ? input.sale_ends_at : (before?.saleEndsAt ?? null),
         status: input.status,
       };
       const productId = before ? before.id : await repository.store(productColumns);
@@ -239,7 +248,10 @@ export default class ProductService extends Service {
         productId,
         keys.map((storageKey, sortOrder) => ({ storageKey, url: this.storage.publicUrl(storageKey), sortOrder }))
       );
-      removedImageKeys = existingImages.map((image) => image.storageKey).filter((key) => !keys.includes(key));
+      // File yang masih dipakai produk lain (hasil duplikasi) tidak dihapus.
+      const candidates = existingImages.map((image) => image.storageKey).filter((key) => !keys.includes(key));
+      const stillUsed = new Set(await repository.imageKeysInUse(candidates, productId));
+      removedImageKeys = candidates.filter((key) => !stillUsed.has(key));
 
       await this.auditLogService.record(tx, actor, {
         action: before ? AuditActionEnum.product_updated : AuditActionEnum.product_created,
@@ -247,23 +259,41 @@ export default class ProductService extends Service {
         targetId: productId,
         metadata: before
           ? {
-              ...AuditLogService.changes(this.auditSnapshot(before, existingVariants), this.auditSnapshot({ ...before, ...productColumns }, variants.map((variant) => variant.columns))),
+              ...AuditLogService.changes(
+                this.auditSnapshot(before, existingVariants),
+                this.auditSnapshot(
+                  { ...before, ...productColumns },
+                  variants.map((variant) => variant.columns)
+                )
+              ),
               removed_variant_ids: removedIds,
             }
-          : { after: this.auditSnapshot(productColumns, variants.map((variant) => variant.columns)) },
+          : {
+              after: this.auditSnapshot(
+                productColumns,
+                variants.map((variant) => variant.columns)
+              ),
+            },
       });
       return productId;
     });
 
     // File yang tidak dipakai lagi dihapus setelah commit; gagal hapus tidak membatalkan simpan.
     if (removedImageKeys.length) {
-      this.storage.deleteObjects(removedImageKeys).catch((error) => logger.error({ err: error, keys: removedImageKeys }, "[product] failed to delete old images"));
+      this.storage
+        .deleteObjects(removedImageKeys)
+        .catch((error) => logger.error({ err: error, keys: removedImageKeys }, "[product] failed to delete old images"));
     }
     return productId;
   }
 
   // Harga satu varian sesuai hak akses. Lihat penjelasan di atas class.
-  private resolvePricing(variant: SaveVariantInputType, existing: ProductVariantType | undefined, index: number, context: PricingContextType): VariantPricingType {
+  private resolvePricing(
+    variant: SaveVariantInputType,
+    existing: ProductVariantType | undefined,
+    index: number,
+    context: PricingContextType
+  ): VariantPricingType {
     if (!context.canSeeCost) {
       if (existing) {
         return {
@@ -272,26 +302,32 @@ export default class ProductService extends Service {
           price: existing.price,
           priceLocked: existing.priceLocked,
           compareAtPrice: existing.compareAtPrice,
+          salePrice: existing.salePrice,
         };
       }
       // Varian baru dari Staf: harga jual diisi manual dan dikunci; Owner bisa melengkapi harga dasar nanti.
       if (variant.price === undefined) throw new ValidationException([{ field: `variants.${index}.price`, message: "Price is required" }]);
-      return { basePrice: variant.price, markupPercent: null, price: variant.price, priceLocked: true, compareAtPrice: null };
+      return { basePrice: variant.price, markupPercent: null, price: variant.price, priceLocked: true, compareAtPrice: null, salePrice: null };
     }
 
     const basePrice = variant.base_price ?? existing?.basePrice;
     if (basePrice === undefined) throw new ValidationException([{ field: `variants.${index}.base_price`, message: "Base price is required" }]);
     const markupPercent = variant.markup_percent !== undefined ? variant.markup_percent : (existing?.markupPercent ?? null);
     const compareAtPrice = variant.compare_at_price !== undefined ? variant.compare_at_price : (existing?.compareAtPrice ?? null);
+    const salePrice = variant.sale_price !== undefined ? variant.sale_price : (existing?.salePrice ?? null);
 
+    let price: number;
     if (variant.price_locked) {
-      const price = variant.price ?? existing?.price;
-      if (price === undefined) throw new ValidationException([{ field: `variants.${index}.price`, message: "Price is required when it is locked" }]);
-      return { basePrice, markupPercent, price, priceLocked: true, compareAtPrice };
+      const locked = variant.price ?? existing?.price;
+      if (locked === undefined) throw new ValidationException([{ field: `variants.${index}.price`, message: "Price is required when it is locked" }]);
+      price = locked;
+    } else {
+      price = sellingPrice(basePrice, effectiveMarkup(markupPercent, context.productMarkup, context.globalMarkup, context.categoryMarkup), context.rounding);
     }
-
-    const price = sellingPrice(basePrice, effectiveMarkup(markupPercent, context.productMarkup, context.globalMarkup), context.rounding);
-    return { basePrice, markupPercent, price, priceLocked: false, compareAtPrice };
+    if (salePrice !== null && salePrice >= price) {
+      throw new ValidationException([{ field: `variants.${index}.sale_price`, message: "Sale price must be lower than the selling price" }]);
+    }
+    return { basePrice, markupPercent, price, priceLocked: Boolean(variant.price_locked), compareAtPrice, salePrice };
   }
 
   // SKU kosong dibuat otomatis; SKU harus unik di dalam payload dan di seluruh produk lain.
@@ -314,7 +350,8 @@ export default class ProductService extends Service {
   // Slug dari input (harus unik) atau dari nama (diberi akhiran -2, -3, ... bila sudah dipakai).
   private async resolveSlug(requested: string, name: string, exceptId: number | undefined, repository: ProductRepository): Promise<string> {
     if (requested) {
-      if (await repository.slugExists(requested, exceptId)) throw new ConflictException(`Slug ${requested} is already used`, [{ field: "slug", message: "Slug is already used" }]);
+      if (await repository.slugExists(requested, exceptId))
+        throw new ConflictException(`Slug ${requested} is already used`, [{ field: "slug", message: "Slug is already used" }]);
       return requested;
     }
 
@@ -326,7 +363,7 @@ export default class ProductService extends Service {
     return `${base}-${suffix}`;
   }
 
-  private async assertReferences(input: SaveProductInputType): Promise<void> {
+  private async assertReferences(input: SaveProductInputType): Promise<CategoryType> {
     const [category, brand] = await Promise.all([
       this.categoryRepository.findById(input.category_id),
       input.brand_id === null ? null : this.brandRepository.findById(input.brand_id),
@@ -336,13 +373,16 @@ export default class ProductService extends Service {
       ...(input.brand_id !== null && !brand ? [{ field: "brand_id", message: "Brand not found" }] : []),
     ];
     if (errors.length) throw new ValidationException(errors);
+    return category!;
   }
 
   // Produk aktif (tampil di toko) wajib punya foto dan minimal satu varian aktif berharga.
   private assertSellable(imageCount: number, variants: { isActive: boolean; price: number }[]): void {
     const errors = [
       ...(imageCount > 0 ? [] : [{ field: "images", message: "An active product needs at least one photo" }]),
-      ...(variants.some((variant) => variant.isActive && variant.price > 0) ? [] : [{ field: "variants", message: "An active product needs an active variant with a price" }]),
+      ...(variants.some((variant) => variant.isActive && variant.price > 0)
+        ? []
+        : [{ field: "variants", message: "An active product needs an active variant with a price" }]),
     ];
     if (errors.length) throw new ValidationException(errors);
   }

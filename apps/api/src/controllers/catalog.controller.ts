@@ -23,4 +23,10 @@ const product = async (req: Request, res: Response) => {
   res.status(result.status).json(result.data);
 };
 
-export { categories, products, product };
+// GET /catalog/store -> kontak & biaya toko (footer, bantuan, kebijakan).
+const storeInfo = async (_req: Request, res: Response) => {
+  const result = await service.storeInfo();
+  res.status(result.status).json(result.data);
+};
+
+export { categories, products, product, storeInfo };

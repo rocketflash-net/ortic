@@ -7,5 +7,6 @@ const router = Router();
 router.get("/categories", catalog.categories);
 router.get("/products", catalog.products);
 router.get("/products/:slug", catalog.product);
+router.get("/store", catalog.storeInfo);
 
 export default router;

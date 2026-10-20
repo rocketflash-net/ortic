@@ -22,6 +22,8 @@ export type CatalogProduct = {
   /** Highest struck-through price, only when above the lowest price. */
   compare_at_price: number | null
   variant_count: number
+  /** At least one variant has stock in a warehouse that ships. */
+  in_stock: boolean
 }
 
 export type CatalogProductParams = {
@@ -45,6 +47,8 @@ export type CatalogVariant = {
   price: number
   compare_at_price: number | null
   weight_gram: number
+  /** Most units one warehouse can ship (0 = out of stock). */
+  stock: number
 }
 
 /** `GET /catalog/products/{slug}`. */
@@ -54,10 +58,14 @@ export type CatalogProductDetail = {
   slug: string
   brand_name: string | null
   category: { name: string; slug: string }
-  description: string | null
+  /** Sanitized HTML from the API, safe for v-html. */
+  description_html: string | null
   specifications: Record<string, string> | null
   permit_number: string | null
   is_hazardous: boolean
   images: { url: string }[]
   variants: CatalogVariant[]
+  in_stock: boolean
+  /** Running promo; `ends_at` null = no end date. */
+  sale: { ends_at: string | null } | null
 }

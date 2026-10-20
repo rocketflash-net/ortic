@@ -29,6 +29,8 @@ export const Permission = {
   /** Accept/reject orders, book couriers, refunds. */
   ORDERS_MANAGE: "orders:manage",
   TRANSACTIONS_READ: "transactions:read",
+  /** Sales & stock reports. Profit (needs base prices) only with prices:manage. */
+  REPORTS_READ: "reports:read",
   /** Simulate QRIS payments of mock-provider orders (non-production API only). */
   PAYMENTS_SIMULATE: "payments:simulate",
   MEDIA_UPLOAD: "media:upload",

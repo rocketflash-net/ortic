@@ -27,5 +27,7 @@ export default {
     },
   },
   see_products: "Lihat pricelist",
-  contact: "Masih ada pertanyaan? Hubungi kami lewat Instagram {'@'}ortic_id.",
+  contact: "Masih ada pertanyaan, mau retur, atau tanya restock? Hubungi kami.",
+  contact_title: "Hubungi kami",
+  policies: "Kebijakan toko",
 }

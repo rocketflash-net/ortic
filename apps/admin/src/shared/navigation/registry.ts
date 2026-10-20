@@ -3,9 +3,13 @@ import type { ComputedRef } from "vue"
 import { adminUsersNavigation } from "@/features/admin-users/navigation"
 import { customersNavigation } from "@/features/customers/navigation"
 import { dashboardNavigation } from "@/features/dashboard/navigation"
+import { ordersNavigation } from "@/features/orders/navigation"
 import { productsNavigation } from "@/features/products/navigation"
 import { shippingRatesNavigation } from "@/features/shipping-rates/navigation"
 import { warehousesNavigation } from "@/features/warehouses/navigation"
+import { stocksNavigation } from "@/features/stocks/navigation"
+import { settingsNavigation } from "@/features/settings/navigation"
+import { reportsNavigation } from "@/features/reports/navigation"
 import { translate } from "@/plugins/language"
 
 import type { SidebarNavGroup, SidebarNavItem } from "./types"
@@ -35,11 +39,15 @@ export const contextualNavigationGroups: { id: string; useItems: () => ComputedR
 export const sidebarNavigationGroups: SidebarNavGroup[] = [
   {
     id: "main",
-    items: [...dashboardNavigation],
+    items: [...dashboardNavigation, ...ordersNavigation],
   },
   {
     id: "management",
-    items: [{ type: "label", label: translate("utils.navigation.management") }, ...productsNavigation, ...customersNavigation, ...adminUsersNavigation],
+    items: [{ type: "label", label: translate("utils.navigation.management") }, ...productsNavigation, ...stocksNavigation, ...customersNavigation, ...adminUsersNavigation],
+  },
+  {
+    id: "reports",
+    items: [{ type: "label", label: translate("utils.navigation.reports") }, ...reportsNavigation],
   },
   {
     id: "tools",
@@ -47,6 +55,6 @@ export const sidebarNavigationGroups: SidebarNavGroup[] = [
   },
   {
     id: "settings",
-    items: [{ type: "label", label: translate("utils.navigation.settings") }, ...warehousesNavigation],
+    items: [{ type: "label", label: translate("utils.navigation.settings") }, ...warehousesNavigation, ...settingsNavigation],
   },
 ]

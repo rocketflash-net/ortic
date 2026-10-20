@@ -1,5 +1,7 @@
 import { datetime, index, int, mysqlEnum, mysqlTable, text, varchar } from "drizzle-orm/mysql-core";
 import OrderStatusEnum, { ORDER_STATUSES } from "../enums/order-status.enum";
+import OrderStockStateEnum, { ORDER_STOCK_STATES } from "../enums/order-stock-state.enum";
+import RefundStatusEnum, { REFUND_STATUSES } from "../enums/refund-status.enum";
 import { foreignId, id } from "./common/id.column";
 import { timestamps } from "./common/timestamps.column";
 import { users } from "./user.model";
@@ -63,7 +65,45 @@ export const orders = mysqlTable(
     paidAt: datetime("paid_at"),
     cancelledAt: datetime("cancelled_at"),
     cancelReason: varchar("cancel_reason", { length: 255 }),
+
+    // Stok yang dipesan/terpotong oleh pesanan ini (lihat enums/order-stock-state.enum.ts).
+    stockState: mysqlEnum("stock_state", ORDER_STOCK_STATES).notNull().default(OrderStockStateEnum.reserved),
+
+    // Konfirmasi admin (AUTO_ACCEPT_ORDERS=false) dan penolakan. Pesanan lunas yang ditolak wajib direfund manual.
+    acceptedAt: datetime("accepted_at"),
+    rejectedAt: datetime("rejected_at"),
+    rejectReason: varchar("reject_reason", { length: 255 }),
+    refundStatus: mysqlEnum("refund_status", REFUND_STATUSES).notNull().default(RefundStatusEnum.none),
+    refundAmount: int("refund_amount", { unsigned: true }),
+    refundedAt: datetime("refunded_at"),
+    refundNote: varchar("refund_note", { length: 255 }),
+
+    // Pengiriman Biteship (order terjadwal). Kosong = belum dibooking.
+    biteshipOrderId: varchar("biteship_order_id", { length: 64 }).unique(),
+    waybillId: varchar("waybill_id", { length: 64 }),
+    courierTrackingId: varchar("courier_tracking_id", { length: 64 }),
+    // Status mentah dari Biteship (confirmed, allocated, picked, ..., delivered).
+    shippingStatus: varchar("shipping_status", { length: 32 }),
+    courierLink: varchar("courier_link", { length: 500 }),
+    courierDriverName: varchar("courier_driver_name", { length: 100 }),
+    courierDriverPhone: varchar("courier_driver_phone", { length: 30 }),
+    // Jadwal pickup yang diminta ke Biteship (WIB).
+    pickupScheduledAt: datetime("pickup_scheduled_at"),
+    shipmentBookedAt: datetime("shipment_booked_at"),
+    shipmentAttempts: int("shipment_attempts", { unsigned: true }).notNull().default(0),
+    // Pesan error booking terakhir (ditampilkan ke admin, dicoba ulang otomatis).
+    shipmentError: varchar("shipment_error", { length: 255 }),
+    shippedAt: datetime("shipped_at"),
+    deliveredAt: datetime("delivered_at"),
+    completedAt: datetime("completed_at"),
+    // Terakhir kali status pengiriman dicek ulang ke Biteship (rekonsiliasi 2 jam).
+    trackedAt: datetime("tracked_at"),
     ...timestamps,
   },
-  (table) => [index("orders_user_id_created_at_idx").on(table.userId, table.createdAt), index("orders_status_expires_at_idx").on(table.status, table.expiresAt)]
+  (table) => [
+    index("orders_user_id_created_at_idx").on(table.userId, table.createdAt),
+    index("orders_status_expires_at_idx").on(table.status, table.expiresAt),
+    index("orders_warehouse_id_created_at_idx").on(table.warehouseId, table.createdAt),
+    index("orders_paid_at_idx").on(table.paidAt),
+  ]
 );

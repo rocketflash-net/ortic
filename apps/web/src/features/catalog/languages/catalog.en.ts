@@ -15,6 +15,8 @@ export default {
   empty_description: "Try another keyword or browse another category.",
   see_all: "See all products",
   latest: "New products",
+  out_of_stock: "Out of stock",
+  promo: "Sale",
   variants: "{count} variants",
   detail: {
     load_error: "Could not load the product",
@@ -33,5 +35,13 @@ export default {
     hazardous: "Liquid/chemical: only shipped by couriers that accept hazardous goods.",
     shipping_note: "Ships from Pekanbaru/Medan with JNE, J&T, or SiCepat. Shipping is calculated at checkout.",
     home: "Home",
+    out_of_stock: "Out of stock",
+    out_of_stock_note: "This variant is out of stock. Message us on WhatsApp for restock info.",
+    stock_left: "Only {count} left",
+    in_stock: "In stock",
+    sale_until: "Sale until {date}",
+    sale_running: "On sale",
+    sale_ends_in: "Ends in {time}",
+    add_error: "Could not add to cart",
   },
 }

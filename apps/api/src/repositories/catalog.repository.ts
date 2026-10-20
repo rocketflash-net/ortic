@@ -1,12 +1,15 @@
-import { and, asc, count, desc, eq, inArray, like, max, min, or, SQL, sql } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, like, or, SQL, sql } from "drizzle-orm";
 import Repository from "@base/repository.base";
 import ProductStatusEnum from "@enums/product-status.enum";
 import { brands } from "@models/brand.model";
 import { categories } from "@models/category.model";
 import { productVariants } from "@models/product-variant.model";
+import { warehouseStocks } from "@models/warehouse-stock.model";
+import { warehouses } from "@models/warehouse.model";
 import { products } from "@models/product.model";
 import { CategoryType, ProductType } from "@@types/entity.type";
 import { PaginationOptionsType } from "@@types/pagination.type";
+import { effectivePriceSql } from "@utils/price.util";
 
 type CatalogSortType = "newest" | "price_asc" | "price_desc" | "name";
 
@@ -20,6 +23,11 @@ type SellableVariantType = {
   variantName: string | null;
   sku: string;
   price: number;
+  salePrice: number | null;
+  compareAtPrice: number | null;
+  basePrice: number;
+  saleStartsAt: Date | null;
+  saleEndsAt: Date | null;
   weightGram: number;
   lengthCm: number | null;
   widthCm: number | null;
@@ -35,22 +43,33 @@ type CatalogListRowType = {
   maxPrice: number;
   maxCompareAtPrice: number | null;
   variantCount: number;
+  inStock: boolean;
 };
 
 // Produk yang tampil di toko: status Aktif dan punya minimal satu varian aktif.
 const activeVariantExists = sql`exists (select 1 from ${productVariants} where ${productVariants.productId} = ${products.id} and ${productVariants.isActive} = true)`;
+
+// Produk punya stok tersedia (quantity - reserved > 0) untuk varian aktif di gudang aktif yang siap kirim.
+const inStockSql = sql<number>`exists (select 1 from ${warehouseStocks} ws
+  inner join ${productVariants} sv on sv.id = ws.variant_id
+  inner join ${warehouses} sw on sw.id = ws.warehouse_id
+  where sv.product_id = ${products.id} and sv.is_active = true and sw.is_active = true and sw.biteship_area_id is not null
+    and ws.quantity - ws.reserved > 0)`;
 
 /**
  * Query katalog publik (toko). Hanya produk Aktif dengan varian aktif; harga dasar tidak pernah diambil.
  */
 export default class CatalogRepository extends Repository {
   async findPublished(filter: CatalogFilterType, sort: CatalogSortType, { limit, offset }: PaginationOptionsType): Promise<CatalogListRowType[]> {
-    const minPrice = min(productVariants.price);
+    const now = new Date();
+    const price = effectivePriceSql(now);
+    const minPrice = sql<number>`min(${price})`;
+    const inStock = sql<number>`max(${inStockSql})`;
     const orderBy = {
-      newest: [desc(products.createdAt), desc(products.id)],
-      price_asc: [asc(minPrice), asc(products.id)],
-      price_desc: [desc(minPrice), asc(products.id)],
-      name: [asc(products.name), asc(products.id)],
+      newest: [desc(inStock), desc(products.createdAt), desc(products.id)],
+      price_asc: [desc(inStock), asc(minPrice), asc(products.id)],
+      price_desc: [desc(inStock), desc(minPrice), asc(products.id)],
+      name: [desc(inStock), asc(products.name), asc(products.id)],
     }[sort];
 
     const rows = await this.executor
@@ -60,9 +79,13 @@ export default class CatalogRepository extends Repository {
         categorySlug: categories.slug,
         brandName: brands.name,
         minPrice,
-        maxPrice: max(productVariants.price),
-        maxCompareAtPrice: max(productVariants.compareAtPrice),
+        maxPrice: sql<number>`max(${price})`,
+        // Harga coret: harga normal selama promo, atau compare_at_price manual.
+        maxCompareAtPrice: sql<
+          number | null
+        >`max(case when ${price} < ${productVariants.price} then ${productVariants.price} when ${productVariants.compareAtPrice} > ${productVariants.price} then ${productVariants.compareAtPrice} else null end)`,
         variantCount: count(productVariants.id),
+        inStock,
       })
       .from(products)
       .innerJoin(categories, eq(categories.id, products.categoryId))
@@ -79,6 +102,7 @@ export default class CatalogRepository extends Repository {
       minPrice: Number(row.minPrice),
       maxPrice: Number(row.maxPrice),
       maxCompareAtPrice: row.maxCompareAtPrice === null ? null : Number(row.maxCompareAtPrice),
+      inStock: Number(row.inStock) === 1,
     }));
   }
 
@@ -113,6 +137,11 @@ export default class CatalogRepository extends Repository {
         variantName: productVariants.name,
         sku: productVariants.sku,
         price: productVariants.price,
+        salePrice: productVariants.salePrice,
+        compareAtPrice: productVariants.compareAtPrice,
+        basePrice: productVariants.basePrice,
+        saleStartsAt: products.saleStartsAt,
+        saleEndsAt: products.saleEndsAt,
         weightGram: productVariants.weightGram,
         lengthCm: productVariants.lengthCm,
         widthCm: productVariants.widthCm,

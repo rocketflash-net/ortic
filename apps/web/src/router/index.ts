@@ -7,6 +7,7 @@ import cartRoutes from "@/features/cart/routes";
 import catalogRoutes from "@/features/catalog/routes";
 import checkoutRoutes from "@/features/checkout/routes";
 import helpRoutes from "@/features/help/routes";
+import legalRoutes from "@/features/legal/routes";
 import ordersRoutes from "@/features/orders/routes";
 import { authenticationGuard } from "@/features/authentication/guards";
 import authenticationRoutes from "@/features/authentication/routes";
@@ -21,7 +22,7 @@ const router = createRouter({
       path: "/",
       component: StoreLayout,
       // Katalog terbuka untuk semua orang; halaman yang butuh login memakai meta.requiresAuth sendiri.
-      children: [...homeRoutes, ...catalogRoutes, ...cartRoutes, ...checkoutRoutes, ...ordersRoutes, ...helpRoutes, ...accountRoutes],
+      children: [...homeRoutes, ...catalogRoutes, ...cartRoutes, ...checkoutRoutes, ...ordersRoutes, ...helpRoutes, ...legalRoutes, ...accountRoutes],
     },
 
     ...authenticationRoutes,

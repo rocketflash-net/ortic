@@ -13,4 +13,8 @@ const grantAdminSchema = z.object({
 
 const listUserQuerySchema = searchQuerySchema;
 
-export { updateUserRoleSchema, grantAdminSchema, listUserQuerySchema };
+const updateUserWarehouseSchema = z.object({
+  warehouse_id: z.number().int().positive().nullable(),
+});
+
+export { updateUserRoleSchema, grantAdminSchema, listUserQuerySchema, updateUserWarehouseSchema };

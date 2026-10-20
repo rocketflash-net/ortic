@@ -1,12 +1,16 @@
 <script setup lang="ts">
-import { ref } from "vue";
+import { computed, ref } from "vue";
 
 import { DashboardPageName } from "@/features/dashboard/models";
+import NotificationBell from "@/features/notifications/components/NotificationBell.vue";
+import { useNotificationStream } from "@/features/notifications/composables/useNotificationStream";
 import { translate } from "@/plugins/language";
 import { useDashboardSearchGroups } from "@/shared/composables/useDashboardSearchGroups";
 import { useSidebarNavigation } from "@/shared/composables/useSidebarNavigation";
 import AppSidebarFooter from "@/shared/components/AppSidebarFooter.vue";
 import BrandLogo from "@/shared/components/BrandLogo.vue";
+import { Permission } from "@/shared/models/access";
+import { useAccessStore } from "@/shared/stores/useAccessStore";
 
 /** Display name shown next to the logo in the sidebar header. */
 const APP_NAME = "Ortic Admin";
@@ -14,6 +18,11 @@ const APP_NAME = "Ortic Admin";
 const isSidebarOpen = ref(false);
 const { menu } = useSidebarNavigation();
 const { groups } = useDashboardSearchGroups();
+const accessStore = useAccessStore();
+const canSeeNotifications = computed(() => accessStore.hasPermission(Permission.DASHBOARD_VIEW));
+
+// Live admin notifications (new paid orders, booking failures, low stock) while the dashboard is open.
+useNotificationStream();
 
 /**
  * Sidebar menu spacing: taller links with a gap between them and clearly spaced group labels.
@@ -87,10 +96,15 @@ function navigationUi(collapsed: boolean) {
               {{ APP_NAME }}
             </span>
           </RouterLink>
+
+          <NotificationBell v-if="!collapsed && canSeeNotifications" />
         </div>
       </template>
 
       <template #default="{ collapsed }">
+        <div v-if="collapsed && canSeeNotifications" class="flex justify-center">
+          <NotificationBell collapsed />
+        </div>
         <div data-tour="search">
           <UDashboardSearchButton
             block

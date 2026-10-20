@@ -22,6 +22,20 @@
       "when": 1792401316093,
       "tag": "0002_orders_addresses",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "5",
+      "when": 1792457767549,
+      "tag": "0003_fulfillment_stock_cart",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1792459224419,
+      "tag": "0004_audit_user_warehouse",
+      "breakpoints": true
     }
   ]
 }

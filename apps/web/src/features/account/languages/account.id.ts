@@ -1,5 +1,15 @@
 export default {
   title: "Akun saya",
-  coming_soon: "Alamat pengiriman, nomor WhatsApp, dan riwayat pesanan akan tampil di sini.",
+  name: "Nama",
+  phone: "Nomor WhatsApp",
+  phone_help: "Dipakai untuk alamat baru dan dihubungi kurir.",
+  phone_invalid: "Nomor harus 8–15 digit",
+  profession: "Profesi",
+  profession_placeholder: "Pilih profesi",
+  save: "Simpan profil",
+  reset: "Batal",
+  saved: "Profil disimpan",
+  save_error: "Profil gagal disimpan",
+  orders: "Pesanan saya",
   logout: "Keluar",
 }

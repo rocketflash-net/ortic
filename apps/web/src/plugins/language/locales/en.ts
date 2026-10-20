@@ -5,6 +5,7 @@ import catalog from "@/features/catalog/languages/catalog.en";
 import checkout from "@/features/checkout/languages/checkout.en";
 import help from "@/features/help/languages/help.en";
 import home from "@/features/home/languages/home.en";
+import legal from "@/features/legal/languages/legal.en";
 import orders from "@/features/orders/languages/orders.en";
 import utils from "@/shared/languages/utils.en";
 
@@ -17,6 +18,7 @@ export default {
     checkout,
     help,
     home,
+    legal,
     orders,
   },
   utils,

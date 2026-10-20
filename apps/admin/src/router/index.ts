@@ -7,10 +7,14 @@ import { authenticationGuard } from "@/features/authentication/guards";
 import authenticationRoutes from "@/features/authentication/routes";
 import customersRoutes from "@/features/customers/routes";
 import dashboardRoutes from "@/features/dashboard/routes";
+import ordersRoutes, { ordersStandaloneRoutes } from "@/features/orders/routes";
 import profileRoutes from "@/features/profile/routes";
 import productsRoutes from "@/features/products/routes";
 import shippingRatesRoutes from "@/features/shipping-rates/routes";
 import warehousesRoutes from "@/features/warehouses/routes";
+import stocksRoutes from "@/features/stocks/routes";
+import settingsRoutes from "@/features/settings/routes";
+import reportsRoutes from "@/features/reports/routes";
 import { accessGuard } from "@/shared/navigation/guards";
 import sharedRoutes from "@/shared/routes";
 
@@ -22,8 +26,10 @@ const router = createRouter({
       component: AppLayout,
       // Every page inside AppLayout requires a signed-in user (see the guards below).
       meta: { requiresAuth: true },
-      children: [...dashboardRoutes, ...productsRoutes, ...customersRoutes, ...adminUsersRoutes, ...shippingRatesRoutes, ...warehousesRoutes, ...profileRoutes],
+      children: [...dashboardRoutes, ...ordersRoutes, ...productsRoutes, ...customersRoutes, ...adminUsersRoutes, ...shippingRatesRoutes, ...warehousesRoutes, ...stocksRoutes, ...settingsRoutes, ...reportsRoutes, ...profileRoutes],
     },
+
+    ...ordersStandaloneRoutes,
 
     ...authenticationRoutes,
 

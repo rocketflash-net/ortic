@@ -1,10 +1,19 @@
 import { Request, Response } from "express";
+import ProductIoService from "@services/product-io.service";
 import ProductService from "@services/product.service";
 import { getAuditActor, getAuthUser } from "@utils/request.util";
 import { idParamSchema } from "@validators/common.validator";
-import { createBrandSchema, listProductQuerySchema, presignProductImageSchema, productStatusSchema, saveProductSchema } from "@validators/product.validator";
+import {
+  createBrandSchema,
+  importProductsSchema,
+  listProductQuerySchema,
+  presignProductImageSchema,
+  productStatusSchema,
+  saveProductSchema,
+} from "@validators/product.validator";
 
 const service = new ProductService();
+const ioService = new ProductIoService();
 
 // GET /admin/products
 const index = async (req: Request, res: Response) => {
@@ -66,4 +75,23 @@ const storeBrand = async (req: Request, res: Response) => {
   res.status(result.status).json(result.data);
 };
 
-export { index, show, store, update, updateStatus, presignImage, pricingDefaults, brands, storeBrand };
+// POST /admin/products/:id/duplicate
+const duplicate = async (req: Request, res: Response) => {
+  const { id } = idParamSchema.parse(req.params);
+  const result = await ioService.duplicate(id, getAuditActor(req));
+  res.status(result.status).json(result.data);
+};
+
+// GET /admin/products/export.csv
+const exportCsv = async (req: Request, res: Response) => {
+  const csv = await ioService.exportCsv(getAuthUser(req));
+  res.status(200).set({ "Content-Type": "text/csv; charset=utf-8", "Content-Disposition": 'attachment; filename="produk-ortic.csv"' }).send(csv);
+};
+
+// POST /admin/products/import { csv, dry_run }
+const importCsv = async (req: Request, res: Response) => {
+  const result = await ioService.importCsv(importProductsSchema.parse(req.body), getAuthUser(req), getAuditActor(req));
+  res.status(result.status).json(result.data);
+};
+
+export { index, show, store, update, updateStatus, presignImage, pricingDefaults, brands, storeBrand, duplicate, exportCsv, importCsv };

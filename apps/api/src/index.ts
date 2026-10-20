@@ -5,6 +5,7 @@ import { authConfig } from "@config/auth.config";
 import { checkDatabaseConnection, closeDatabaseConnection } from "@config/database.config";
 import { logger } from "@config/logger.config";
 import { startExpirationJob } from "@jobs/expiration.job";
+import { startShipmentJob } from "@jobs/shipment.job";
 import createApp from "./app";
 
 // Batas waktu graceful shutdown; setelah itu proses dipaksa berhenti (mis. koneksi keep-alive yang tidak menutup).
@@ -20,6 +21,7 @@ const bootstrap = async (): Promise<void> => {
   });
   if (authConfig.emailCode.devFixedCode) logger.warn("AUTH_DEV_LOGIN_CODE is set: every email login code is the fixed dev code");
   const stopExpirationJob = startExpirationJob();
+  const stopShipmentJob = startShipmentJob();
 
   let shuttingDown = false;
   const shutdown = (signal: string) => {
@@ -34,6 +36,7 @@ const bootstrap = async (): Promise<void> => {
     forceExit.unref();
 
     stopExpirationJob();
+    stopShipmentJob();
     // Tutup koneksi idle supaya server.close() tidak menunggu keep-alive.
     server.closeIdleConnections();
     server.close(async () => {

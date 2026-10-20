@@ -13,7 +13,7 @@ export default class SessionRepository extends Repository {
   // User pemilik session yang masih berlaku, atau null jika session tidak ada / kedaluwarsa.
   async findActiveUser(sessionId: string, now: Date): Promise<AuthUserType | null> {
     const [row] = await this.executor
-      .select({ id: users.id, email: users.email, name: users.name, avatarUrl: users.avatarUrl, role: users.role })
+      .select({ id: users.id, email: users.email, name: users.name, avatarUrl: users.avatarUrl, role: users.role, warehouseId: users.warehouseId })
       .from(sessions)
       .innerJoin(users, eq(users.id, sessions.userId))
       .where(and(eq(sessions.id, sessionId), gt(sessions.expiresAt, now)))
@@ -49,7 +49,12 @@ export default class SessionRepository extends Repository {
       .offset(keep);
     if (stale.length === 0) return 0;
 
-    const [result] = await this.executor.delete(sessions).where(inArray(sessions.id, stale.map((session) => session.id)));
+    const [result] = await this.executor.delete(sessions).where(
+      inArray(
+        sessions.id,
+        stale.map((session) => session.id)
+      )
+    );
     return result.affectedRows;
   }
 

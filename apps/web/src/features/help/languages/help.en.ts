@@ -27,5 +27,7 @@ export default {
     },
   },
   see_products: "See the price list",
-  contact: "More questions? Reach us on Instagram {'@'}ortic_id.",
+  contact: "Questions, returns, or restock info? Get in touch.",
+  contact_title: "Contact us",
+  policies: "Store policies",
 }

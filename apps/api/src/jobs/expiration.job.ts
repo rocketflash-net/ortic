@@ -20,7 +20,7 @@ const LOGIN_CODE_RETENTION_MS = 24 * 60 * 60 * 1000;
  * - hapus session yang sudah kedaluwarsa atau menganggur melewati idle timeout
  * - hapus kode OTP login & kode tukar login Google yang sudah tidak berlaku lebih dari 24 jam
  * - pesanan yang QRIS-nya kedaluwarsa: dicek sekali lagi ke provider, lalu dibatalkan bila memang belum dibayar
- *   (fitur stok nanti juga melepas reservasi stoknya di sini)
+ *   dan reservasi stoknya dilepas
  */
 const runExpiration = async (): Promise<void> => {
   const now = new Date();

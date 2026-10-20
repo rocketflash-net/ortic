@@ -2,7 +2,7 @@ import { FrontendAppType } from "@enums/frontend-app.enum";
 import { UserType } from "@@types/entity.type";
 
 // User yang sedang login, ditempel ke `req.user` oleh middleware authenticate.
-type AuthUserType = Pick<UserType, "id" | "email" | "name" | "avatarUrl" | "role">;
+type AuthUserType = Pick<UserType, "id" | "email" | "name" | "avatarUrl" | "role" | "warehouseId">;
 
 type GoogleProfileType = {
   sub: string;

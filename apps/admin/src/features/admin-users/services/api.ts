@@ -31,6 +31,17 @@ export const addAdminUser = async (email: string, role: AdminRole): Promise<Back
   return data
 }
 
+/** Ties a Staf to one warehouse (only its orders & stock), or `null` for all warehouses. Owner only. */
+export const updateAdminWarehouse = async (id: number, warehouseId: number | null): Promise<BackendResponse<AdminUser>> => {
+  const configRequest: CustomAxiosRequestConfig<{ warehouse_id: number | null }> = {
+    url: `/admin/users/${id}/warehouse`,
+    method: "PATCH",
+    data: { warehouse_id: warehouseId },
+  }
+  const { data } = await axiosInstance.request(configRequest)
+  return data
+}
+
 /**
  * Changes a user's role; `user` revokes admin access. The API refuses your own account and demoting the last
  * superadmin.

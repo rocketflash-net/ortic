@@ -11,7 +11,7 @@ const isPast = (date: Date | null | undefined, now: Date = new Date()): boolean 
 const calendarDay = (date: Date, timeZone: string): string =>
   new Intl.DateTimeFormat("en-CA", { timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
 
-const isValidTimeZone =(timeZone: string): boolean => {
+const isValidTimeZone = (timeZone: string): boolean => {
   try {
     new Intl.DateTimeFormat("en-US", { timeZone });
     return true;
@@ -20,4 +20,15 @@ const isValidTimeZone =(timeZone: string): boolean => {
   }
 };
 
-export { addMinutes, addDays, isPast, calendarDay, isValidTimeZone };
+const WIB_OFFSET_MS = 7 * 60 * MINUTE_MS;
+
+// Awal hari WIB (YYYY-MM-DD) dalam UTC, mis. "2026-10-20" -> 2026-10-19T17:00:00Z.
+const startOfWibDay = (day: string): Date => new Date(Date.parse(day + "T00:00:00Z") - WIB_OFFSET_MS);
+
+// Akhir hari WIB (inklusif) dalam UTC.
+const endOfWibDay = (day: string): Date => new Date(startOfWibDay(day).getTime() + DAY_MS - 1);
+
+// Tanggal WIB (YYYY-MM-DD) dari waktu UTC.
+const wibDay = (date: Date): string => new Date(date.getTime() + WIB_OFFSET_MS).toISOString().slice(0, 10);
+
+export { addMinutes, addDays, isPast, calendarDay, isValidTimeZone, startOfWibDay, endOfWibDay, wibDay };

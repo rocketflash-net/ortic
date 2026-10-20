@@ -102,7 +102,51 @@
 
   /* Foto produk tanpa latar: outline putih + bayangan, seperti postingan Instagram. */
   .product-cutout {
-    filter: drop-shadow(0 0 0 #fff) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff)
-      drop-shadow(0 -2px 0 #fff) drop-shadow(4px 6px 6px rgb(0 0 0 / 0.25));
+    filter: drop-shadow(0 0 0 #fff) drop-shadow(2px 0 0 #fff) drop-shadow(-2px 0 0 #fff) drop-shadow(0 2px 0 #fff) drop-shadow(0 -2px 0 #fff)
+      drop-shadow(4px 6px 6px rgb(0 0 0 / 0.25));
+  }
+
+  /* Deskripsi produk & halaman kebijakan (HTML dari editor dashboard / konten statis). */
+  .rich-text {
+    line-height: 1.7;
+  }
+  .rich-text > * + * {
+    margin-top: 0.75rem;
+  }
+  .rich-text h2 {
+    font-family: var(--font-display);
+    font-size: 1.6rem;
+    letter-spacing: 0.02em;
+    color: var(--color-ortic-ink);
+    margin-top: 1.5rem;
+  }
+  .rich-text h3,
+  .rich-text h4 {
+    font-weight: 700;
+    color: var(--color-ortic-ink);
+    margin-top: 1.25rem;
+  }
+  .rich-text ul {
+    list-style: disc;
+    padding-left: 1.25rem;
+  }
+  .rich-text ol {
+    list-style: decimal;
+    padding-left: 1.25rem;
+  }
+  .rich-text li + li {
+    margin-top: 0.25rem;
+  }
+  .rich-text a {
+    color: var(--color-ortic-blue);
+    text-decoration: underline;
+  }
+  .rich-text blockquote {
+    border-left: 3px solid var(--color-ortic-yellow);
+    padding-left: 0.75rem;
+    font-style: italic;
+  }
+  .rich-text hr {
+    border-color: rgb(0 0 0 / 0.12);
   }
 }

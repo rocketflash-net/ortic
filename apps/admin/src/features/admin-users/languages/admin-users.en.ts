@@ -18,6 +18,7 @@ export default {
   table: {
     admin: "Admin",
     role: "Role",
+    warehouse: "Warehouse",
     joined: "Joined",
   },
   form: {
@@ -43,5 +44,14 @@ export default {
     user_confirm: "Revoke access",
     done: "Role updated",
     error_title: "Couldn't change the role",
+  },
+  warehouse: {
+    action: "Assign warehouse",
+    title: "Warehouse for {name}",
+    description: "Staff tied to one warehouse only see that warehouse's orders, stock, and notifications.",
+    label: "Warehouse",
+    all: "All warehouses",
+    saved: "Staff warehouse saved",
+    error: "Staff warehouse could not be saved",
   },
 }

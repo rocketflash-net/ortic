@@ -34,7 +34,12 @@ export default {
   },
   items: {
     title: "Items",
-    unavailable: "Some items are no longer sold. Remove them from the cart and try again.",
+    unavailable: "Some items are out of stock or no longer sold. Adjust the quantity and try again.",
+    not_sold: "No longer sold",
+    out_of_stock: "Out of stock",
+    only_left: "Only {count} left",
+    fix: "Adjust",
+    split: "These items are stored in different warehouses. Check out separately: remove some items, then order the rest in another order.",
   },
   shipping: {
     title: "Shipping",
@@ -58,5 +63,10 @@ export default {
     note: "The QR is valid for 15 minutes. Scan it from any mobile banking or e-wallet app.",
     choose_shipping: "Choose a shipping option first",
     error: "Could not place the order",
+    agree_prefix: "I agree to the",
+    terms: "Terms & Conditions",
+    and: "and",
+    returns: "Return Policy",
+    agree_required: "Tick the Terms & Conditions agreement first.",
   },
 }

@@ -17,3 +17,6 @@ export * from "../models/setting.model";
 export * from "../models/user-address.model";
 export * from "../models/order.model";
 export * from "../models/order-item.model";
+export * from "../models/order-event.model";
+export * from "../models/cart-item.model";
+export * from "../models/notification.model";

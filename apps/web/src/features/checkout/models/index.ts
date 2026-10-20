@@ -48,7 +48,8 @@ export type ShippingOption = {
 /** `POST /checkout/quote`: cart re-priced by the API, plus shipping options from the origin warehouse. */
 export type CheckoutQuote = {
   address: Address
-  origin: { name: string; city: string }
+  /** Warehouse that ships the order (has stock for every item, cheapest shipping). */
+  origin: { id: number; name: string; city: string }
   items: {
     variant_id: number
     product_name: string
@@ -75,6 +76,8 @@ export type CheckoutPayload = {
   address_id: number
   items: CheckoutItemInput[]
   insure: boolean
+  /** `origin.id` from the quote, so the chosen courier stays valid. */
+  warehouse_id?: number
   courier_code: string
   service_code: string
 }

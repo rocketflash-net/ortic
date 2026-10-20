@@ -87,15 +87,14 @@ const logout = async (req: Request, res: Response) => {
   res.status(result.status).json(result.data);
 };
 
-const me = (req: Request, res: Response) => {
-  const result = service.me(getAuthUser(req));
+const me = async (req: Request, res: Response) => {
+  const result = await service.me(getAuthUser(req));
   res.status(result.status).json(result.data);
 };
 
-// PATCH /auth/me { name } -> profil terbaru (bentuk sama dengan GET /auth/me).
+// PATCH /auth/me { name?, phone?, profession? } -> profil terbaru (bentuk sama dengan GET /auth/me).
 const updateMe = async (req: Request, res: Response) => {
-  const { name } = updateProfileSchema.parse(req.body);
-  const result = await service.updateProfile(getAuthUser(req).id, name);
+  const result = await service.updateProfile(getAuthUser(req).id, updateProfileSchema.parse(req.body));
   res.status(result.status).json(result.data);
 };
 

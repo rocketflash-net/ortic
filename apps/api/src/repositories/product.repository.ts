@@ -7,14 +7,7 @@ import { productVariants } from "@models/product-variant.model";
 import { products } from "@models/product.model";
 import { stockMovements } from "@models/stock-movement.model";
 import { warehouseStocks } from "@models/warehouse-stock.model";
-import {
-  NewProductImageType,
-  NewProductType,
-  NewProductVariantType,
-  ProductImageType,
-  ProductType,
-  ProductVariantType,
-} from "@@types/entity.type";
+import { NewProductImageType, NewProductType, NewProductVariantType, ProductImageType, ProductType, ProductVariantType } from "@@types/entity.type";
 import { PaginationOptionsType } from "@@types/pagination.type";
 import { ProductFilterType } from "@validators/product.validator";
 
@@ -74,6 +67,22 @@ export default class ProductRepository extends Repository {
     return await this.executor.select().from(productVariants).where(eq(productVariants.productId, productId)).orderBy(asc(productVariants.id));
   }
 
+  async findVariantById(id: number): Promise<ProductVariantType | null> {
+    const [variant] = await this.executor.select().from(productVariants).where(eq(productVariants.id, id)).limit(1);
+    return variant ?? null;
+  }
+
+  // "Nama produk · Varian" per id varian (untuk notifikasi & pesan error).
+  async findVariantLabels(ids: number[]): Promise<Map<number, string>> {
+    if (ids.length === 0) return new Map();
+    const rows = await this.executor
+      .select({ id: productVariants.id, productName: products.name, variantName: productVariants.name })
+      .from(productVariants)
+      .innerJoin(products, eq(products.id, productVariants.productId))
+      .where(inArray(productVariants.id, ids));
+    return new Map(rows.map((row) => [row.id, row.variantName ? `${row.productName} · ${row.variantName}` : row.productName]));
+  }
+
   async variantSummaries(productIds: number[]): Promise<VariantSummaryType[]> {
     if (productIds.length === 0) return [];
     const rows = await this.executor
@@ -86,7 +95,11 @@ export default class ProductRepository extends Repository {
       .from(productVariants)
       .where(and(inArray(productVariants.productId, productIds), eq(productVariants.isActive, true)))
       .groupBy(productVariants.productId);
-    return rows.map((row) => ({ ...row, minPrice: row.minPrice === null ? null : Number(row.minPrice), maxPrice: row.maxPrice === null ? null : Number(row.maxPrice) }));
+    return rows.map((row) => ({
+      ...row,
+      minPrice: row.minPrice === null ? null : Number(row.minPrice),
+      maxPrice: row.maxPrice === null ? null : Number(row.maxPrice),
+    }));
   }
 
   // SKU yang sudah dipakai varian lain (di luar `exceptVariantIds`).
@@ -124,7 +137,11 @@ export default class ProductRepository extends Repository {
   // ----- Foto -----
 
   async findImages(productId: number): Promise<ProductImageType[]> {
-    return await this.executor.select().from(productImages).where(eq(productImages.productId, productId)).orderBy(asc(productImages.sortOrder), asc(productImages.id));
+    return await this.executor
+      .select()
+      .from(productImages)
+      .where(eq(productImages.productId, productId))
+      .orderBy(asc(productImages.sortOrder), asc(productImages.id));
   }
 
   // Foto utama (urutan pertama) per produk.
@@ -138,6 +155,16 @@ export default class ProductRepository extends Repository {
     const result = new Map<number, string>();
     for (const row of rows) if (!result.has(row.productId)) result.set(row.productId, row.url);
     return result;
+  }
+
+  // Storage key yang masih dipakai produk lain (foto hasil duplikasi berbagi file yang sama).
+  async imageKeysInUse(keys: string[], exceptProductId: number): Promise<string[]> {
+    if (keys.length === 0) return [];
+    const rows = await this.executor
+      .selectDistinct({ key: productImages.storageKey })
+      .from(productImages)
+      .where(and(inArray(productImages.storageKey, keys), ne(productImages.productId, exceptProductId)));
+    return rows.map((row) => row.key);
   }
 
   async replaceImages(productId: number, images: Omit<NewProductImageType, "productId">[]): Promise<void> {

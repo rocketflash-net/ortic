@@ -1,4 +1,4 @@
-import { AnyMySqlColumn, boolean, mysqlEnum, mysqlTable, varchar } from "drizzle-orm/mysql-core";
+import { AnyMySqlColumn, boolean, mysqlEnum, mysqlTable, timestamp, varchar } from "drizzle-orm/mysql-core";
 // PENTING: file model dibaca langsung oleh drizzle-kit, gunakan relative import (bukan alias @xxx).
 import UserRoleEnum, { USER_ROLES } from "../enums/user-role.enum";
 import { foreignId, id } from "./common/id.column";
@@ -23,5 +23,7 @@ export const users = mysqlTable("users", {
   // Staf yang dikaitkan ke satu gudang hanya melihat pesanan gudang itu; NULL = semua gudang.
   warehouseId: foreignId("warehouse_id").references((): AnyMySqlColumn => warehouses.id, { onDelete: "set null" }),
   isBlocked: boolean("is_blocked").notNull().default(false),
+  // Admin: notifikasi yang dibuat setelah waktu ini dihitung belum dibaca.
+  notificationsReadAt: timestamp("notifications_read_at"),
   ...timestamps,
 });

@@ -18,6 +18,7 @@ export default {
   table: {
     admin: "Admin",
     role: "Role",
+    warehouse: "Gudang",
     joined: "Bergabung",
   },
   form: {
@@ -43,5 +44,14 @@ export default {
     user_confirm: "Cabut akses",
     done: "Role diperbarui",
     error_title: "Role gagal diubah",
+  },
+  warehouse: {
+    action: "Atur gudang",
+    title: "Gudang untuk {name}",
+    description: "Staf yang dikaitkan ke satu gudang hanya melihat pesanan, stok, dan notifikasi gudang itu.",
+    label: "Gudang",
+    all: "Semua gudang",
+    saved: "Gudang staf disimpan",
+    error: "Gudang staf gagal disimpan",
   },
 }

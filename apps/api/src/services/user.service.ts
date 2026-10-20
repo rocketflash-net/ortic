@@ -34,6 +34,24 @@ export default class UserService extends Service {
     return this.success(UserDto.forAdmin(user), "User role updated");
   }
 
+  // Kaitkan Staf ke satu gudang (hanya melihat pesanan & stok gudang itu); null = semua gudang.
+  async updateWarehouse(id: number, warehouseId: number | null, actor: AuditActorType): Promise<ResponseType> {
+    const user = await this.userRepository.findById(id);
+    if (!user) throw new NotFoundException(`User with id ${id} not found`);
+    if (user.role === UserRoleEnum.user) throw new ForbiddenException("Only admins can be assigned to a warehouse");
+
+    await this.userRepository.transaction(async (tx) => {
+      await this.userRepository.withTransaction(tx).update(id, { warehouseId });
+      await this.auditLogService.record(tx, actor, {
+        action: AuditActionEnum.user_warehouse_updated,
+        targetType: "user",
+        targetId: id,
+        metadata: { email: user.email, before: { warehouse_id: user.warehouseId }, after: { warehouse_id: warehouseId } },
+      });
+    });
+    return this.success(UserDto.forAdmin((await this.userRepository.findById(id))!), "Warehouse assignment updated");
+  }
+
   async listAdmins(): Promise<UserType[]> {
     return await this.userRepository.findAdmins();
   }

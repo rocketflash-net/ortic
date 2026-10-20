@@ -11,6 +11,7 @@ import type {
   PricingDefaults,
   ProductDetail,
   ProductImageUpload,
+  ProductImportResult,
   ProductListInfo,
   ProductListItem,
   ProductListParams,
@@ -60,6 +61,30 @@ export const updateProduct = async (id: number, payload: ProductPayload): Promis
 
 export const updateProductStatus = async (id: number, status: ProductStatus): Promise<BackendResponse<ProductDetail>> => {
   const configRequest: CustomAxiosRequestConfig<{ status: ProductStatus }> = { url: `/admin/products/${id}/status`, method: "PATCH", data: { status } }
+  const { data } = await axiosInstance.request(configRequest)
+  return data
+}
+
+/** Copies a product (info, photos, variants with new SKUs, no stock) as a Draft named "(Salinan)". */
+export const duplicateProduct = async (id: number): Promise<BackendResponse<{ id: number }>> => {
+  const configRequest: CustomAxiosRequestConfig = { url: `/admin/products/${id}/duplicate`, method: "POST" }
+  const { data } = await axiosInstance.request(configRequest)
+  return data
+}
+
+/** Every variant as one CSV row; base price & markup columns only for the Owner. */
+export const exportProductsCsv = async (): Promise<Blob> => {
+  const configRequest: CustomAxiosRequestConfig = { url: "/admin/products/export.csv", method: "GET", responseType: "blob" }
+  const { data } = await axiosInstance.request<Blob>(configRequest)
+  return data
+}
+
+/**
+ * Imports products from CSV text (rows matched by SKU). Run with `dryRun` first to preview counts and issues; nothing
+ * is saved while there are issues.
+ */
+export const importProducts = async (csv: string, dryRun: boolean): Promise<BackendResponse<ProductImportResult>> => {
+  const configRequest: CustomAxiosRequestConfig = { url: "/admin/products/import", method: "POST", data: { csv, dry_run: dryRun } }
   const { data } = await axiosInstance.request(configRequest)
   return data
 }

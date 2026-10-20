@@ -5,6 +5,10 @@ import NotFoundException from "@exceptions/not-found.exception";
 import CatalogRepository from "@repositories/catalog.repository";
 import CategoryRepository from "@repositories/category.repository";
 import ProductRepository from "@repositories/product.repository";
+import StockRepository from "@repositories/stock.repository";
+import WarehouseRepository from "@repositories/warehouse.repository";
+import SettingRepository from "@repositories/setting.repository";
+import { PUBLIC_SETTING_KEYS } from "@registries/setting.registry";
 import ResponseType from "@@types/response.type";
 import { buildPaginationMeta, toPaginationOptions } from "@utils/pagination.util";
 import { CatalogProductQueryType } from "@validators/catalog.validator";
@@ -14,7 +18,10 @@ export default class CatalogService extends Service {
   constructor(
     private readonly categoryRepository: CategoryRepository = new CategoryRepository(),
     private readonly catalogRepository: CatalogRepository = new CatalogRepository(),
-    private readonly productRepository: ProductRepository = new ProductRepository()
+    private readonly productRepository: ProductRepository = new ProductRepository(),
+    private readonly stockRepository: StockRepository = new StockRepository(),
+    private readonly warehouseRepository: WarehouseRepository = new WarehouseRepository(),
+    private readonly settingRepository: SettingRepository = new SettingRepository()
   ) {
     super();
   }
@@ -50,6 +57,20 @@ export default class CatalogService extends Service {
       this.productRepository.findImages(product.id),
       this.catalogRepository.activeVariants(product.id),
     ]);
-    return this.success(CatalogProductDto.detail(product, { name: category?.name ?? "", slug: category?.slug ?? "" }, brandName, images, variants));
+    const warehouseIds = (await this.warehouseRepository.findAll())
+      .filter((warehouse) => warehouse.isActive && warehouse.biteshipAreaId)
+      .map((warehouse) => warehouse.id);
+    const availability = await this.stockRepository.availability(
+      variants.map((variant) => variant.id),
+      warehouseIds
+    );
+    const stock = new Map(variants.map((variant) => [variant.id, Math.max(0, ...(availability.get(variant.id)?.values() ?? []))]));
+    return this.success(CatalogProductDto.detail(product, { name: category?.name ?? "", slug: category?.slug ?? "" }, brandName, images, variants, stock));
+  }
+
+  // Info toko untuk footer, bantuan, kebijakan, dan ringkasan checkout (tanpa login).
+  async storeInfo(): Promise<ResponseType> {
+    const settings = await this.settingRepository.getAll();
+    return this.success(Object.fromEntries(PUBLIC_SETTING_KEYS.map((key) => [key, settings[key]])));
   }
 }
