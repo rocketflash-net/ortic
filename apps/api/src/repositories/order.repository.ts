@@ -47,6 +47,15 @@ export default class OrderRepository extends Repository {
     return result.affectedRows > 0;
   }
 
+  // Simpan QRIS hanya bila order masih menunggu pembayaran dan belum punya QRIS (pemulihan order tanpa QRIS).
+  async attachQris(id: number, data: Pick<NewOrderType, "providerRef" | "providerTransactionId" | "qrString" | "expiresAt">): Promise<boolean> {
+    const [result] = await this.executor
+      .update(orders)
+      .set(data)
+      .where(and(eq(orders.id, id), eq(orders.status, OrderStatusEnum.awaiting_payment), isNull(orders.providerRef)));
+    return result.affectedRows > 0;
+  }
+
   // Compare-and-set orders.stock_state: true bila berubah (pemanggil lalu mengubah stok), false bila sudah ditangani.
   async transitionStock(id: number, from: OrderStockStateType[], to: OrderStockStateType): Promise<boolean> {
     const [result] = await this.executor
@@ -189,6 +198,17 @@ export default class OrderRepository extends Repository {
       );
     }
     return and(...conditions);
+  }
+
+  // Order yang masih menunggu pembayaran (opsional per gudang), untuk disinkronkan sebelum daftar pesanan admin dibaca.
+  async findAwaitingPayment(warehouseId?: number | null, limit = 100): Promise<OrderType[]> {
+    const conditions: SQL[] = [eq(orders.status, OrderStatusEnum.awaiting_payment)];
+    if (warehouseId) conditions.push(eq(orders.warehouseId, warehouseId));
+    return await this.executor
+      .select()
+      .from(orders)
+      .where(and(...conditions))
+      .limit(limit);
   }
 
   // Order belum dibayar yang QR-nya sudah lewat `before`.

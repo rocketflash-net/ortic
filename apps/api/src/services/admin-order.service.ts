@@ -20,6 +20,7 @@ import UserRepository from "@repositories/user.repository";
 import WarehouseRepository from "@repositories/warehouse.repository";
 import AuditLogService from "@services/audit-log.service";
 import OrderMailService from "@services/order-mail.service";
+import OrderService from "@services/order.service";
 import ShipmentService from "@services/shipment.service";
 import StockService from "@services/stock.service";
 import { AuditActorType } from "@@types/audit.type";
@@ -54,7 +55,8 @@ export default class AdminOrderService extends Service {
     private readonly stockService: StockService = new StockService(),
     private readonly shipmentService: ShipmentService = new ShipmentService(),
     private readonly auditLogService: AuditLogService = new AuditLogService(),
-    private readonly orderMail: OrderMailService = new OrderMailService()
+    private readonly orderMail: OrderMailService = new OrderMailService(),
+    private readonly orderService: OrderService = new OrderService()
   ) {
     super();
   }
@@ -68,6 +70,8 @@ export default class AdminOrderService extends Service {
       to: query.date_to ? endOfWibDay(query.date_to) : undefined,
       search: query.search,
     };
+    // Status pembayaran disamakan dulu (sama seperti tampilan pembeli), supaya daftar & jumlah per status tidak tertinggal.
+    await this.orderService.refreshAwaitingPayment(filter.warehouseId);
     const [rows, total, counts] = await Promise.all([
       this.orderRepository.findAdmin(filter, toPaginationOptions(query)),
       this.orderRepository.countAdmin(filter),
@@ -88,7 +92,8 @@ export default class AdminOrderService extends Service {
   }
 
   async show(code: string, user: AuthUserType): Promise<ResponseType> {
-    return this.success(await this.detail(await this.findOrFail(code, user), user));
+    const order = await this.orderService.refreshUnpaid(await this.findOrFail(code, user));
+    return this.success(await this.detail(order, user));
   }
 
   // Terima pesanan lunas -> Diproses -> booking kurir.

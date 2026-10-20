@@ -53,11 +53,11 @@ const countdown = computed(() => `${String(Math.floor(secondsLeft.value / 60)).p
 const qrText = computed(() => order.value?.payment.qr_string ?? "")
 const qrImage = useQRCode(qrText, { width: 640, margin: 2, errorCorrectionLevel: "M" })
 
-// Refresh "my orders" once the status moves on.
+// Refresh "my orders" whenever the status is (re)loaded, so the list never shows an older status than this page.
 watch(
   () => order.value?.status,
   (status, previous) => {
-    if (previous && status !== previous) queryClient.invalidateQueries({ queryKey: orderQueryKeys.all })
+    if (status && status !== previous) queryClient.invalidateQueries({ queryKey: [...orderQueryKeys.all, "list"] })
   },
 )
 
@@ -165,7 +165,12 @@ const { mutate: simulate, isPending: isSimulating } = useMutation({
           <p class="text-3xl font-bold text-ortic-ink">{{ formatCurrency(order.total) }}</p>
 
           <div class="mx-auto mt-4 w-full max-w-72 rounded-xl border-2 border-ortic-ink bg-white p-2">
-            <img v-if="qrImage" :src="qrImage" :alt="`QRIS ${order.code}`" class="aspect-square w-full" />
+            <img v-if="qrText && qrImage" :src="qrImage" :alt="`QRIS ${order.code}`" class="aspect-square w-full" />
+            <!-- QRIS not created yet (checkout interrupted); the API recreates it on the next poll. -->
+            <div v-else class="flex aspect-square w-full flex-col items-center justify-center gap-2 p-4 text-sm text-muted">
+              <UIcon name="i-lucide-loader-circle" class="size-8 animate-spin text-ortic-ink" />
+              {{ translate("features.orders.detail.qr_preparing") }}
+            </div>
           </div>
           <p class="mt-1 text-xs font-semibold tracking-widest text-ortic-ink">QRIS</p>
 

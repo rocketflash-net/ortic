@@ -96,7 +96,7 @@ const tooltipTriggers = {
     </template>
 
     <template #body>
-      <section class="relative overflow-hidden rounded-xl bg-ortic-blue p-6 text-white sm:p-8">
+      <section class="relative shrink-0 overflow-hidden rounded-xl bg-ortic-blue p-6 text-white sm:p-8">
         <div class="flex gap-1.5" aria-hidden="true">
           <span class="h-1.5 w-10 rounded-full bg-ortic-red" />
           <span class="h-1.5 w-10 rounded-full bg-ortic-yellow" />
@@ -110,12 +110,12 @@ const tooltipTriggers = {
 
       <QueryErrorAlert v-if="summaryQuery.isError.value" :title="translate('features.dashboard.load_error')" :error="summaryQuery.error.value" @retry="summaryQuery.refetch()" />
 
-      <div v-else-if="!summary" class="grid gap-4 sm:grid-cols-3">
+      <div v-else-if="!summary" class="grid shrink-0 gap-4 sm:grid-cols-3">
         <USkeleton v-for="index in 6" :key="index" class="h-24" />
       </div>
 
       <template v-else>
-        <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div class="grid shrink-0 gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <UCard v-for="kpi in kpis" :key="kpi.key" :ui="{ body: 'p-4 sm:p-5' }">
             <div class="flex items-start justify-between gap-3" :title="kpi.help ? translate(kpi.help) : undefined">
               <div class="min-w-0">
@@ -127,7 +127,7 @@ const tooltipTriggers = {
           </UCard>
         </div>
 
-        <div class="grid gap-4 lg:grid-cols-5">
+        <div class="grid shrink-0 gap-4 lg:grid-cols-5">
           <UCard class="lg:col-span-3">
             <template #header>
               <h2 class="font-semibold text-highlighted">{{ translate("features.dashboard.chart.title") }}</h2>

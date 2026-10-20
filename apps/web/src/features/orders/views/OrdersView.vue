@@ -20,6 +20,10 @@ const ordersQuery = useQuery({
   queryKey: computed(() => orderQueryKeys.list(page.value)),
   queryFn: () => getOrders(page.value),
   placeholderData: keepPreviousData,
+  // Always show the current status: refetch on every visit, and keep polling while a QRIS can still expire or be paid.
+  staleTime: 0,
+  refetchInterval: (query) => (query.state.data?.data?.some((order) => order.status === "awaiting_payment") ? 15000 : false),
+  refetchIntervalInBackground: false,
 })
 const orders = computed(() => ordersQuery.data.value?.data ?? [])
 const total = computed(() => ordersQuery.data.value?.additionalInfo.pagination.total ?? 0)
