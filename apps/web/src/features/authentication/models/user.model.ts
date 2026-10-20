@@ -8,6 +8,9 @@ export type UserProfile = {
   /** Optional avatar image URL. Falls back to initials when omitted. */
   avatar?: string;
   role: string;
+  /** WhatsApp number (also offered when adding an address). */
+  phone: string | null;
+  profession: string | null;
 };
 
 /** Response of `GET /auth/me`: the user plus their RBAC access profile. */
@@ -16,6 +19,8 @@ export type MeResponse = {
   email: string;
   name: string;
   avatar_url: string | null;
+  phone: string | null;
+  profession: string | null;
   role: RoleKey;
   roles: RoleKey[];
   permissions: PermissionKey[];

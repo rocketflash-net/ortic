@@ -13,6 +13,9 @@ import { formatNumber } from "@/shared/helpers/number"
 import { Permission } from "@/shared/models/access"
 import { useAccessStore } from "@/shared/stores/useAccessStore"
 
+import { getAdminCategories, settingsQueryKeys } from "@/features/settings/services/api"
+
+import ProductDescriptionField from "../components/ProductDescriptionField.vue"
 import ProductImagesField from "../components/ProductImagesField.vue"
 import ProductVariantsField from "../components/ProductVariantsField.vue"
 import { emptyProductForm, formSnapshot, rowKey, toProductForm, toProductPayload, type ProductForm } from "../helpers/form"
@@ -21,6 +24,7 @@ import { PRODUCT_STATUSES, ProductsPageName, type ProductDetail } from "../model
 import {
   createBrand,
   createProduct,
+  duplicateProduct,
   getBrands,
   getCategories,
   getPricingDefaults,
@@ -82,7 +86,28 @@ const title = computed(() => (isEdit.value ? form.value.name || translate("featu
 const categoryItems = computed(() => (categoriesQuery.data.value ?? []).map((category) => ({ label: category.name, value: category.id })))
 const brandItems = computed(() => (brandsQuery.data.value ?? []).map((brand) => ({ label: brand.name, value: brand.id })))
 const statusItems = computed(() => PRODUCT_STATUSES.map((status) => ({ label: translate(`features.products.status.${status}`), value: status })))
-const globalMarkupLabel = computed(() => formatNumber(pricingQuery.data.value?.markup_percent ?? 0, "id-ID", 2))
+// Category markups are only needed (and visible) for the Owner.
+const adminCategoriesQuery = useQuery({
+  queryKey: settingsQueryKeys.categories,
+  queryFn: getAdminCategories,
+  enabled: canManagePrices,
+  select: (response) => response.data ?? [],
+})
+const categoryMarkup = computed(() => adminCategoriesQuery.data.value?.find((category) => category.id === form.value.category_id)?.markup_percent ?? null)
+const inheritedMarkupLabel = computed(() => formatNumber(categoryMarkup.value ?? pricingQuery.data.value?.markup_percent ?? 0, "id-ID", 2))
+const saleRangeError = computed(() =>
+  form.value.sale_starts_at && form.value.sale_ends_at && form.value.sale_ends_at <= form.value.sale_starts_at ? translate("features.products.form.pricing.sale_range_error") : undefined,
+)
+
+const { mutate: duplicate, isPending: isDuplicating } = useMutation({
+  mutationFn: () => duplicateProduct(productId.value!),
+  onSuccess: (response) => {
+    queryClient.invalidateQueries({ queryKey: productQueryKeys.all })
+    showToast.success({ title: translate("features.products.actions.duplicated") })
+    router.push({ name: ProductsPageName.PRODUCT_EDIT, params: { id: response.data!.id } })
+  },
+  onError: (error) => showToast.error({ title: translate("features.products.actions.duplicate_error"), description: getApiErrorMessage(error) }),
+})
 
 const { mutate: addBrand, isPending: isAddingBrand } = useMutation({
   mutationFn: (name: string) => createBrand(name),
@@ -123,7 +148,9 @@ const { mutate: save, isPending: isSaving } = useMutation({
   },
 })
 
-const canSave = computed(() => isDirty.value && !isUploading.value && form.value.name.trim().length >= 2 && form.value.category_id !== undefined)
+const canSave = computed(
+  () => isDirty.value && !isUploading.value && !saleRangeError.value && form.value.name.trim().length >= 2 && form.value.category_id !== undefined,
+)
 </script>
 
 <template>
@@ -134,6 +161,17 @@ const canSave = computed(() => isDirty.value && !isUploading.value && form.value
           <UButton icon="i-lucide-arrow-left" color="neutral" variant="ghost" :to="{ name: ProductsPageName.PRODUCTS }" :aria-label="translate('features.products.form.back')" />
         </template>
         <template #right>
+          <UButton
+            v-if="isEdit"
+            :label="translate('features.products.actions.duplicate')"
+            icon="i-lucide-copy"
+            color="neutral"
+            variant="outline"
+            size="sm"
+            :loading="isDuplicating"
+            :disabled="isDirty"
+            @click="duplicate()"
+          />
           <UBadge v-if="isEdit" :label="translate(`features.products.status.${form.status}`)" :color="form.status === 'active' ? 'success' : 'neutral'" variant="subtle" />
         </template>
       </UDashboardNavbar>
@@ -180,7 +218,7 @@ const canSave = computed(() => isDirty.value && !isUploading.value && form.value
               />
             </UFormField>
             <UFormField :label="translate('features.products.form.info.description')" :error="fieldErrors.description" class="sm:col-span-2">
-              <UTextarea v-model="form.description" :rows="5" autoresize maxlength="20000" :placeholder="translate('features.products.form.info.description_placeholder')" class="w-full" />
+              <ProductDescriptionField v-model="form.description" :placeholder="translate('features.products.form.info.description_placeholder')" :invalid="Boolean(fieldErrors.description)" />
             </UFormField>
             <UFormField :label="translate('features.products.form.info.permit_number')" :error="fieldErrors.permit_number">
               <UInput v-model="form.permit_number" maxlength="64" :placeholder="translate('features.products.form.info.permit_placeholder')" class="w-full" />
@@ -209,6 +247,7 @@ const canSave = computed(() => isDirty.value && !isUploading.value && form.value
               v-model="form.variants"
               :can-manage-prices="canManagePrices"
               :product-markup="form.markup_percent"
+              :category-markup="categoryMarkup"
               :pricing="pricingQuery.data.value"
               :errors="fieldErrors"
             />
@@ -258,13 +297,22 @@ const canSave = computed(() => isDirty.value && !isUploading.value && form.value
                   :max="1000"
                   :step="0.5"
                   :format-options="{ maximumFractionDigits: 2 }"
-                  :placeholder="translate('features.products.form.pricing.markup_placeholder', { value: globalMarkupLabel })"
+                  :placeholder="translate(categoryMarkup !== null ? 'features.products.form.pricing.markup_placeholder_category' : 'features.products.form.pricing.markup_placeholder', { value: inheritedMarkupLabel })"
                   class="w-full"
                 />
               </UFormField>
               <p v-if="pricingQuery.data.value" class="text-sm text-muted">
                 {{ translate("features.products.form.pricing.rounding", { value: formatNumber(pricingQuery.data.value.price_rounding) }) }}
               </p>
+              <USeparator />
+              <p class="text-sm font-medium text-highlighted">{{ translate("features.products.form.pricing.sale_title") }}</p>
+              <p class="text-sm text-muted">{{ translate("features.products.form.pricing.sale_help") }}</p>
+              <UFormField :label="translate('features.products.form.pricing.sale_starts')" :error="fieldErrors.sale_starts_at">
+                <UInput v-model="form.sale_starts_at" type="datetime-local" class="w-full" />
+              </UFormField>
+              <UFormField :label="translate('features.products.form.pricing.sale_ends')" :error="fieldErrors.sale_ends_at ?? saleRangeError">
+                <UInput v-model="form.sale_ends_at" type="datetime-local" class="w-full" />
+              </UFormField>
             </template>
             <p v-else class="text-sm text-muted">{{ translate("features.products.form.pricing.staff_note") }}</p>
           </UCard>

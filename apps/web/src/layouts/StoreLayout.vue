@@ -12,8 +12,10 @@ import { useCartStore } from "@/features/cart/stores/cart.store"
 import { CatalogPageName } from "@/features/catalog/models"
 import { HelpPageName } from "@/features/help/models"
 import { HomePageName } from "@/features/home/models"
+import { LegalPageName } from "@/features/legal/models"
 import { OrdersPageName } from "@/features/orders/models"
 import { translate } from "@/plugins/language"
+import { useStoreInfo } from "@/shared/composables/useStoreInfo"
 
 /**
  * Store shell: blue header with logo, search, cart, and account; bottom navigation on phones (most buyers arrive from
@@ -23,6 +25,7 @@ const route = useRoute()
 const router = useRouter()
 const { userData } = storeToRefs(useAuthStore())
 const { count: cartCount } = storeToRefs(useCartStore())
+const { info: storeInfo, whatsappUrl, instagramUrl } = useStoreInfo()
 
 const accountTo = computed(() => (userData.value ? { name: AccountPageName.ACCOUNT } : { name: AuthenticationPageName.LOGIN }))
 
@@ -43,15 +46,31 @@ const search = () => {
 const isActive = (name: string) => route.name === name
 
 const bottomNav = computed(() => [
-  { icon: "i-lucide-house", label: translate("utils.navigation.home"), to: { name: HomePageName.HOME }, active: isActive(HomePageName.HOME) },
+  {
+    icon: "i-lucide-house",
+    label: translate("utils.navigation.home"),
+    to: { name: HomePageName.HOME },
+    active: isActive(HomePageName.HOME),
+  },
   {
     icon: "i-lucide-layout-grid",
     label: translate("utils.navigation.products"),
     to: { name: CatalogPageName.PRODUCTS },
     active: [CatalogPageName.PRODUCTS, CatalogPageName.CATEGORY, CatalogPageName.PRODUCT].includes(route.name as CatalogPageName),
   },
-  { icon: "i-lucide-shopping-cart", label: translate("utils.navigation.cart"), to: { name: CartPageName.CART }, active: isActive(CartPageName.CART), badge: cartCount.value },
-  { icon: "i-lucide-package", label: translate("utils.navigation.orders"), to: { name: OrdersPageName.ORDERS }, active: isActive(OrdersPageName.ORDERS) },
+  {
+    icon: "i-lucide-shopping-cart",
+    label: translate("utils.navigation.cart"),
+    to: { name: CartPageName.CART },
+    active: isActive(CartPageName.CART),
+    badge: cartCount.value,
+  },
+  {
+    icon: "i-lucide-package",
+    label: translate("utils.navigation.orders"),
+    to: { name: OrdersPageName.ORDERS },
+    active: isActive(OrdersPageName.ORDERS),
+  },
   {
     icon: "i-lucide-user-round",
     label: translate("utils.navigation.account"),
@@ -84,8 +103,20 @@ const bottomNav = computed(() => [
         </form>
 
         <div class="hidden items-center gap-2 md:flex">
-          <UButton :to="{ name: HelpPageName.HELP }" :label="translate('utils.navigation.help')" color="neutral" variant="ghost" class="text-white hover:bg-white/10" />
-          <UButton :to="{ name: OrdersPageName.ORDERS }" :label="translate('utils.navigation.orders')" color="neutral" variant="ghost" class="text-white hover:bg-white/10" />
+          <UButton
+            :to="{ name: HelpPageName.HELP }"
+            :label="translate('utils.navigation.help')"
+            color="neutral"
+            variant="ghost"
+            class="text-white hover:bg-white/10"
+          />
+          <UButton
+            :to="{ name: OrdersPageName.ORDERS }"
+            :label="translate('utils.navigation.orders')"
+            color="neutral"
+            variant="ghost"
+            class="text-white hover:bg-white/10"
+          />
           <UChip :text="cartCount" :show="cartCount > 0" color="secondary" size="3xl" inset>
             <UButton
               :to="{ name: CartPageName.CART }"
@@ -113,14 +144,34 @@ const bottomNav = computed(() => [
     </main>
 
     <footer class="bg-ortic-ink text-white/80">
-      <div class="mx-auto flex max-w-6xl flex-col gap-3 px-4 py-8 text-sm sm:flex-row sm:items-center sm:justify-between">
-        <p>© {{ new Date().getFullYear() }} Ortic Indonesia · Medan &amp; Pekanbaru</p>
-        <nav class="flex gap-4">
+      <div class="mx-auto grid max-w-6xl gap-6 px-4 py-8 text-sm sm:grid-cols-3">
+        <div class="space-y-1">
+          <p class="font-display text-2xl tracking-wide text-white">{{ storeInfo.store_name }}</p>
+          <p>{{ storeInfo.store_address || "Medan & Pekanbaru" }}</p>
+          <div class="flex flex-wrap gap-3 pt-1">
+            <a v-if="whatsappUrl" :href="whatsappUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-1 hover:text-white">
+              <UIcon name="i-lucide-message-circle" class="size-4" />WhatsApp
+            </a>
+            <a v-if="instagramUrl" :href="instagramUrl" target="_blank" rel="noopener" class="inline-flex items-center gap-1 hover:text-white">
+              <UIcon name="i-lucide-instagram" class="size-4" />@{{ storeInfo.store_instagram }}
+            </a>
+            <a v-if="storeInfo.store_email" :href="`mailto:${storeInfo.store_email}`" class="inline-flex items-center gap-1 hover:text-white">
+              <UIcon name="i-lucide-mail" class="size-4" />{{ storeInfo.store_email }}
+            </a>
+          </div>
+        </div>
+        <nav class="flex flex-col gap-1.5">
           <RouterLink :to="{ name: CatalogPageName.PRODUCTS }" class="hover:text-white">{{ translate("utils.navigation.products") }}</RouterLink>
           <RouterLink :to="{ name: HelpPageName.HELP }" class="hover:text-white">{{ translate("utils.navigation.help") }}</RouterLink>
+          <RouterLink :to="{ name: OrdersPageName.ORDERS }" class="hover:text-white">{{ translate("utils.navigation.orders") }}</RouterLink>
         </nav>
-        <p class="font-medium">ortic.id · Ortic Indonesia Dentsply</p>
+        <nav class="flex flex-col gap-1.5">
+          <RouterLink :to="{ name: LegalPageName.TERMS }" class="hover:text-white">{{ translate("features.legal.terms") }}</RouterLink>
+          <RouterLink :to="{ name: LegalPageName.PRIVACY }" class="hover:text-white">{{ translate("features.legal.privacy") }}</RouterLink>
+          <RouterLink :to="{ name: LegalPageName.RETURNS }" class="hover:text-white">{{ translate("features.legal.returns") }}</RouterLink>
+        </nav>
       </div>
+      <p class="border-t border-white/10 px-4 py-4 text-center text-xs">© {{ new Date().getFullYear() }} {{ storeInfo.store_name }} · ortic.id</p>
     </footer>
 
     <!-- Bottom navigation (phones). -->

@@ -3,7 +3,7 @@ import AuditLogService from "@services/audit-log.service";
 import UserService from "@services/user.service";
 import { getAuditActor } from "@utils/request.util";
 import { idParamSchema } from "@validators/common.validator";
-import { grantAdminSchema, listUserQuerySchema, updateUserRoleSchema } from "@validators/admin.validator";
+import { grantAdminSchema, listUserQuerySchema, updateUserRoleSchema, updateUserWarehouseSchema } from "@validators/admin.validator";
 import { listAuditLogQuerySchema } from "@validators/audit-log.validator";
 
 // Dashboard admin: kelola user & admin, dan lihat audit log.
@@ -20,6 +20,14 @@ const updateUserRole = async (req: Request, res: Response) => {
   const { id } = idParamSchema.parse(req.params);
   const { role } = updateUserRoleSchema.parse(req.body);
   const result = await userService.updateRole(id, role, getAuditActor(req));
+  res.status(result.status).json(result.data);
+};
+
+// PATCH /admin/users/:id/warehouse { warehouse_id | null }
+const updateUserWarehouse = async (req: Request, res: Response) => {
+  const { id } = idParamSchema.parse(req.params);
+  const { warehouse_id } = updateUserWarehouseSchema.parse(req.body);
+  const result = await userService.updateWarehouse(id, warehouse_id, getAuditActor(req));
   res.status(result.status).json(result.data);
 };
 
@@ -41,4 +49,4 @@ const listAuditLogs = async (req: Request, res: Response) => {
   res.status(result.status).json(result.data);
 };
 
-export { listUsers, updateUserRole, listAdmins, storeAdmin, listAuditLogs };
+export { listUsers, updateUserRole, updateUserWarehouse, listAdmins, storeAdmin, listAuditLogs };

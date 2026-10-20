@@ -13,11 +13,15 @@ type UserResponseType = {
 
 // Profil user login + profil akses RBAC (format AccessProfile di dashboard: roles & permissions).
 type MeResponseType = UserResponseType & {
+  phone: string | null;
+  profession: string | null;
+  // Staf yang dikaitkan ke satu gudang; null = semua gudang.
+  warehouse_id: number | null;
   roles: string[];
   permissions: PermissionType[];
 };
 
-type AdminUserResponseType = UserResponseType & { created_at: Date };
+type AdminUserResponseType = UserResponseType & { phone: string | null; profession: string | null; warehouse_id: number | null; created_at: Date };
 
 /**
  * Bentuk data user yang dikirim ke client.
@@ -28,11 +32,18 @@ export default class UserDto {
     return { id: user.id, email: user.email, name: user.name, avatar_url: user.avatarUrl, role: user.role };
   }
 
-  static me(user: AuthUserType): MeResponseType {
-    return { ...UserDto.fromEntity(user), roles: [user.role], permissions: permissionsOf(user.role) };
+  static me(user: AuthUserType & Partial<Pick<UserType, "phone" | "profession">>): MeResponseType {
+    return {
+      ...UserDto.fromEntity(user),
+      phone: user.phone ?? null,
+      profession: user.profession ?? null,
+      warehouse_id: user.warehouseId,
+      roles: [user.role],
+      permissions: permissionsOf(user.role),
+    };
   }
 
   static forAdmin(user: UserType): AdminUserResponseType {
-    return { ...UserDto.fromEntity(user), created_at: user.createdAt };
+    return { ...UserDto.fromEntity(user), phone: user.phone, profession: user.profession, warehouse_id: user.warehouseId, created_at: user.createdAt };
   }
 }

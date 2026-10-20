@@ -1,4 +1,4 @@
-import { boolean, decimal, index, json, mysqlEnum, mysqlTable, text, varchar } from "drizzle-orm/mysql-core";
+import { boolean, datetime, decimal, index, json, mysqlEnum, mysqlTable, text, varchar } from "drizzle-orm/mysql-core";
 import ProductStatusEnum, { PRODUCT_STATUSES } from "../enums/product-status.enum";
 import { brands } from "./brand.model";
 import { categories } from "./category.model";
@@ -22,7 +22,10 @@ export const products = mysqlTable(
     permitNumber: varchar("permit_number", { length: 64 }),
     // Bahan cair/kimia (mis. alkohol 96%): hanya ditawarkan kurir yang menerima.
     isHazardous: boolean("is_hazardous").notNull().default(false),
-    // Markup khusus produk (%); NULL = pakai markup global.
+    // Periode harga promo (product_variants.sale_price). NULL = tanpa batas di sisi itu; keduanya NULL = promo selalu berlaku.
+    saleStartsAt: datetime("sale_starts_at"),
+    saleEndsAt: datetime("sale_ends_at"),
+    // Markup khusus produk (%); NULL = pakai markup kategori / global.
     markupPercent: decimal("markup_percent", { precision: 5, scale: 2, mode: "number" }),
     status: mysqlEnum("status", PRODUCT_STATUSES).notNull().default(ProductStatusEnum.draft),
     ...timestamps,

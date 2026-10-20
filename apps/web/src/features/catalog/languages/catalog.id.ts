@@ -15,6 +15,8 @@ export default {
   empty_description: "Coba kata kunci lain atau lihat kategori lain.",
   see_all: "Lihat semua produk",
   latest: "Produk terbaru",
+  out_of_stock: "Stok habis",
+  promo: "Promo",
   variants: "{count} varian",
   detail: {
     load_error: "Produk gagal dimuat",
@@ -33,5 +35,13 @@ export default {
     hazardous: "Bahan cair/kimia: hanya dikirim kurir yang menerima bahan berbahaya.",
     shipping_note: "Dikirim dari Pekanbaru/Medan dengan JNE, J&T, atau SiCepat. Ongkir dihitung saat checkout.",
     home: "Beranda",
+    out_of_stock: "Stok habis",
+    out_of_stock_note: "Varian ini sedang kosong. Hubungi kami lewat WhatsApp untuk info restock.",
+    stock_left: "Stok tersisa {count}",
+    in_stock: "Stok tersedia",
+    sale_until: "Promo sampai {date}",
+    sale_running: "Sedang promo",
+    sale_ends_in: "Berakhir dalam {time}",
+    add_error: "Gagal menambahkan ke keranjang",
   },
 }

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/vue-query"
 import { refDebounced } from "@vueuse/core"
 import { computed, reactive, ref } from "vue"
 
+import { useAuthStore } from "@/features/authentication/stores/authentication.store"
 import { translate } from "@/plugins/language"
 import { useAppToast } from "@/plugins/nuxt-ui/toaster"
 import { getApiErrorMessage, getApiFieldErrors } from "@/shared/helpers/error"
@@ -20,10 +21,12 @@ const emit = defineEmits<{ close: [saved?: Address] }>()
 const queryClient = useQueryClient()
 const { showToast } = useAppToast()
 
+// A new address starts with the buyer name and WhatsApp number from the profile.
+const profile = useAuthStore().userData
 const form = reactive({
   label: props.address?.label ?? "",
-  recipient_name: props.address?.recipient_name ?? "",
-  phone: props.address?.phone ?? "",
+  recipient_name: props.address?.recipient_name ?? profile?.name ?? "",
+  phone: props.address?.phone ?? profile?.phone ?? "",
   address: props.address?.address ?? "",
   notes: props.address?.notes ?? "",
   is_default: props.address?.is_default ?? false,
@@ -57,7 +60,9 @@ const areaItems = computed(() => {
 })
 
 const errors = ref<Record<string, string>>({})
-const isValid = computed(() => form.recipient_name.trim().length >= 2 && form.phone.trim().length >= 9 && form.address.trim().length >= 10 && area.value !== undefined)
+const isValid = computed(
+  () => form.recipient_name.trim().length >= 2 && form.phone.trim().length >= 9 && form.address.trim().length >= 10 && area.value !== undefined,
+)
 
 const { mutate, isPending } = useMutation({
   mutationFn: () =>
@@ -84,7 +89,10 @@ const { mutate, isPending } = useMutation({
   },
   onError: (error) => {
     errors.value = Object.fromEntries(getApiFieldErrors(error).map((item) => [item.field, item.message]))
-    showToast.error({ title: translate("features.checkout.address.save_error"), description: getApiErrorMessage(error) })
+    showToast.error({
+      title: translate("features.checkout.address.save_error"),
+      description: getApiErrorMessage(error),
+    })
   },
 })
 </script>
@@ -100,7 +108,15 @@ const { mutate, isPending } = useMutation({
           <UInput v-model="form.recipient_name" maxlength="100" autocomplete="name" class="w-full" />
         </UFormField>
         <UFormField :label="translate('features.checkout.address.phone')" :error="errors.phone" required>
-          <UInput v-model="form.phone" type="tel" inputmode="tel" maxlength="20" autocomplete="tel" :placeholder="translate('features.checkout.address.phone_placeholder')" class="w-full" />
+          <UInput
+            v-model="form.phone"
+            type="tel"
+            inputmode="tel"
+            maxlength="20"
+            autocomplete="tel"
+            :placeholder="translate('features.checkout.address.phone_placeholder')"
+            class="w-full"
+          />
         </UFormField>
         <UFormField :label="translate('features.checkout.address.area')" :error="errors.biteship_area_id" required class="sm:col-span-2">
           <UInputMenu
@@ -121,7 +137,15 @@ const { mutate, isPending } = useMutation({
           </UInputMenu>
         </UFormField>
         <UFormField :label="translate('features.checkout.address.detail')" :error="errors.address" required class="sm:col-span-2">
-          <UTextarea v-model="form.address" :rows="2" autoresize maxlength="1000" autocomplete="street-address" :placeholder="translate('features.checkout.address.detail_placeholder')" class="w-full" />
+          <UTextarea
+            v-model="form.address"
+            :rows="2"
+            autoresize
+            maxlength="1000"
+            autocomplete="street-address"
+            :placeholder="translate('features.checkout.address.detail_placeholder')"
+            class="w-full"
+          />
         </UFormField>
         <UFormField :label="translate('features.checkout.address.notes')" :error="errors.notes">
           <UInput v-model="form.notes" maxlength="255" :placeholder="translate('features.checkout.address.notes_placeholder')" class="w-full" />

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { DropdownMenuItem, TableColumn } from "@nuxt/ui"
+import { useOverlay } from "@nuxt/ui/composables"
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from "@tanstack/vue-query"
 import { computed } from "vue"
 import { useRouter } from "vue-router"
@@ -11,12 +12,14 @@ import DataTableToolbar from "@/shared/components/DataTableToolbar.vue"
 import QueryErrorAlert from "@/shared/components/QueryErrorAlert.vue"
 import SearchInput from "@/shared/components/SearchInput.vue"
 import { useDebouncedQueryModel, useRouteQueryState } from "@/shared/composables/useRouteQueryState"
+import { saveBlob } from "@/shared/helpers/download"
 import { getApiErrorMessage } from "@/shared/helpers/error"
 import { formatCurrency } from "@/shared/helpers/number"
 import { integerParam, literalParam, paginationParams, stringParam } from "@/shared/helpers/query-param"
 
+import ProductImportModal from "../components/ProductImportModal.vue"
 import { PRODUCT_STATUSES, ProductsPageName, type ProductListItem, type ProductListParams, type ProductStatus } from "../models"
-import { getCategories, getProducts, productQueryKeys, updateProductStatus } from "../services/api"
+import { duplicateProduct, exportProductsCsv, getCategories, getProducts, productQueryKeys, updateProductStatus } from "../services/api"
 
 /**
  * Product list with search (name or SKU), status and category filters kept in the URL, and quick status changes.
@@ -83,10 +86,31 @@ const { mutate: changeStatus } = useMutation({
   onError: (mutationError) => showToast.error({ title: translate("features.products.actions.status_error"), description: getApiErrorMessage(mutationError) }),
 })
 
+const importModal = useOverlay().create(ProductImportModal)
+
+const { mutate: duplicate } = useMutation({
+  mutationFn: (id: number) => duplicateProduct(id),
+  onSuccess: (response) => {
+    queryClient.invalidateQueries({ queryKey: productQueryKeys.all })
+    showToast.success({ title: translate("features.products.actions.duplicated") })
+    router.push({ name: ProductsPageName.PRODUCT_EDIT, params: { id: response.data!.id } })
+  },
+  onError: (mutationError) => showToast.error({ title: translate("features.products.actions.duplicate_error"), description: getApiErrorMessage(mutationError) }),
+})
+
+const { mutate: exportCsv, isPending: isExporting } = useMutation({
+  mutationFn: exportProductsCsv,
+  onSuccess: (blob) => saveBlob(blob, "produk-ortic.csv"),
+  onError: (mutationError) => showToast.error({ title: translate("features.products.export.error"), description: getApiErrorMessage(mutationError) }),
+})
+
 const editRoute = (product: ProductListItem) => ({ name: ProductsPageName.PRODUCT_EDIT, params: { id: product.id } })
 
 const rowActions = (product: ProductListItem): DropdownMenuItem[][] => [
-  [{ label: translate("features.products.actions.edit"), icon: "i-lucide-pencil", to: editRoute(product) }],
+  [
+    { label: translate("features.products.actions.edit"), icon: "i-lucide-pencil", to: editRoute(product) },
+    { label: translate("features.products.actions.duplicate"), icon: "i-lucide-copy", onSelect: () => duplicate(product.id) },
+  ],
   [
     ...(product.status !== "active" ? [{ label: translate("features.products.actions.activate"), icon: "i-lucide-eye", onSelect: () => changeStatus({ id: product.id, status: "active" }) }] : []),
     ...(product.status !== "draft" ? [{ label: translate("features.products.actions.to_draft"), icon: "i-lucide-file-pen", onSelect: () => changeStatus({ id: product.id, status: "draft" }) }] : []),
@@ -117,6 +141,8 @@ const clearFilters = () => {
     <template #header>
       <UDashboardNavbar :title="translate('features.products.page_title')">
         <template #right>
+          <UButton :label="translate('features.products.export.button')" icon="i-lucide-download" color="neutral" variant="ghost" class="hidden sm:inline-flex" :loading="isExporting" @click="exportCsv()" />
+          <UButton :label="translate('features.products.import.button')" icon="i-lucide-upload" color="neutral" variant="outline" class="hidden sm:inline-flex" @click="importModal.open({})" />
           <UButton :label="translate('features.products.add')" icon="i-lucide-plus" :to="{ name: ProductsPageName.PRODUCT_CREATE }" />
         </template>
       </UDashboardNavbar>

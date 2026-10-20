@@ -135,7 +135,124 @@ type BiteshipErrorResponseType = {
   code?: number;
 };
 
+// POST /v1/orders (https://biteship.com/id/docs/api/orders/create). delivery_type "scheduled" = pickup terjadwal.
+type BiteshipOrderItemType = BiteshipRateItemType;
+
+type BiteshipCreateOrderRequestType = {
+  shipper_contact_name?: string;
+  shipper_contact_phone?: string;
+  shipper_contact_email?: string;
+  shipper_organization?: string;
+  origin_contact_name: string;
+  origin_contact_phone: string;
+  origin_address: string;
+  origin_note?: string;
+  origin_postal_code?: number;
+  origin_area_id?: string;
+  origin_coordinate?: { latitude: number; longitude: number };
+  destination_contact_name: string;
+  destination_contact_phone: string;
+  destination_contact_email?: string;
+  destination_address: string;
+  destination_postal_code?: number;
+  destination_area_id?: string;
+  destination_note?: string;
+  courier_company: string;
+  courier_type: string;
+  courier_insurance?: number;
+  delivery_type: "now" | "scheduled";
+  // YYYY-MM-DD dan HH:mm (WIB) untuk delivery_type "scheduled".
+  delivery_date?: string;
+  delivery_time?: string;
+  order_note?: string;
+  reference_id?: string;
+  metadata?: Record<string, unknown>;
+  items: BiteshipOrderItemType[];
+};
+
+// Status order Biteship (https://biteship.com/id/docs/api/orders/status).
+type BiteshipOrderStatusType =
+  | "confirmed"
+  | "scheduled"
+  | "allocated"
+  | "picking_up"
+  | "picked"
+  | "cancelled"
+  | "on_hold"
+  | "dropping_off"
+  | "return_in_transit"
+  | "returned"
+  | "rejected"
+  | "disposed"
+  | "courier_not_found"
+  | "delivered"
+  | "in_transit";
+
+type BiteshipOrderCourierType = {
+  tracking_id: string | null;
+  waybill_id: string | null;
+  company: string;
+  name?: string | null;
+  phone?: string | null;
+  type: string;
+  link?: string | null;
+  insurance?: { amount: number; fee: number; note: string };
+  routing_code?: string | null;
+};
+
+type BiteshipOrderResponseType = {
+  success: true;
+  message: string;
+  object: "order";
+  id: string;
+  courier: BiteshipOrderCourierType;
+  delivery?: { datetime: string; note: string | null; type: string };
+  reference_id: string | null;
+  price: number;
+  status: BiteshipOrderStatusType;
+};
+
+type BiteshipTrackingHistoryType = { note: string; service_type?: string; updated_at: string; status: BiteshipOrderStatusType };
+
+// GET /v1/trackings/:id
+type BiteshipTrackingResponseType = {
+  success: true;
+  message: string;
+  object: "tracking";
+  id: string;
+  waybill_id: string | null;
+  courier: { company: string; name?: string | null; phone?: string | null; driver_name?: string | null; driver_phone?: string | null; link?: string | null };
+  history: BiteshipTrackingHistoryType[];
+  link: string | null;
+  order_id: string;
+  status: BiteshipOrderStatusType;
+};
+
+// Webhook "order.status" / "order.waybill_id" / "order.price" (https://biteship.com/id/docs/api/webhooks).
+type BiteshipWebhookPayloadType = {
+  event: "order.status" | "order.waybill_id" | "order.price" | string;
+  order_id?: string;
+  courier_tracking_id?: string | null;
+  courier_waybill_id?: string | null;
+  courier_company?: string;
+  courier_type?: string;
+  courier_driver_name?: string | null;
+  courier_driver_phone?: string | null;
+  courier_link?: string | null;
+  order_price?: number;
+  status?: BiteshipOrderStatusType;
+  updated_at?: string;
+};
+
 export {
+  type BiteshipOrderItemType,
+  type BiteshipCreateOrderRequestType,
+  type BiteshipOrderStatusType,
+  type BiteshipOrderCourierType,
+  type BiteshipOrderResponseType,
+  type BiteshipTrackingHistoryType,
+  type BiteshipTrackingResponseType,
+  type BiteshipWebhookPayloadType,
   type BiteshipAreaType,
   type BiteshipAreasResponseType,
   type BiteshipItemCategoryType,

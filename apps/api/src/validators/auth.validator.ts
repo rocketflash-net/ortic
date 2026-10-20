@@ -34,10 +34,29 @@ const refreshTokenSchema = z.object({
   refresh_token: z.string().min(1).max(300),
 });
 
-// Ubah profil sendiri: hanya nama. Field lain (mis. email) diabaikan, jadi email tidak bisa diubah lewat sini.
-const updateProfileSchema = z.object({
-  name: z.string().trim().min(1).max(150),
-});
+// Ubah profil sendiri: nama, nomor WhatsApp, profesi. Field lain (mis. email, role) diabaikan.
+const updateProfileSchema = z
+  .object({
+    name: z.string().trim().min(1).max(150),
+    phone: z
+      .string()
+      .trim()
+      .transform((value) => value.replace(/[\s-]/g, ""))
+      .pipe(z.string().regex(/^(\+?\d{8,15})?$/, "Phone must be 8-15 digits"))
+      .transform((value) => value || null)
+      .nullable(),
+    // Dokter gigi, mahasiswa FKG, klinik, dll.
+    profession: z
+      .string()
+      .trim()
+      .max(50)
+      .transform((value) => value || null)
+      .nullable(),
+  })
+  .partial()
+  .refine((input) => Object.keys(input).length > 0, "Provide at least one field to update");
+
+type UpdateProfileInputType = z.infer<typeof updateProfileSchema>;
 
 export {
   googleStartQuerySchema,
@@ -47,4 +66,5 @@ export {
   exchangeCodeSchema,
   refreshTokenSchema,
   updateProfileSchema,
+  type UpdateProfileInputType,
 };

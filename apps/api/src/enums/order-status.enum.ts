@@ -19,5 +19,20 @@ type OrderStatusType = (typeof OrderStatusEnum)[keyof typeof OrderStatusEnum];
 
 const ORDER_STATUSES = Object.values(OrderStatusEnum) as [OrderStatusType, ...OrderStatusType[]];
 
+// Label Indonesia (sama dengan ORDER_STATUS_LABELS di packages/shared), untuk email & ekspor CSV.
+const ORDER_STATUS_LABELS: Record<OrderStatusType, string> = {
+  awaiting_payment: "Menunggu pembayaran",
+  paid: "Dibayar",
+  awaiting_confirmation: "Menunggu konfirmasi",
+  processing: "Diproses",
+  awaiting_pickup: "Menunggu pickup",
+  shipped: "Dikirim",
+  completed: "Selesai",
+  cancelled: "Dibatalkan",
+  rejected: "Ditolak",
+  returned: "Dikembalikan",
+  needs_action: "Perlu tindakan",
+};
+
 export default OrderStatusEnum;
-export { ORDER_STATUSES, type OrderStatusType };
+export { ORDER_STATUSES, ORDER_STATUS_LABELS, type OrderStatusType };

@@ -20,12 +20,18 @@ import { AuthenticatedType, AuthUserType, GoogleProfileType, OAuthFlowType, Toke
 import { UserType } from "@@types/entity.type";
 import { MailMessageType } from "@@types/mail.type";
 import ResponseType from "@@types/response.type";
+import { UpdateProfileInputType } from "@validators/auth.validator";
 import { randomToken, safeEqual, sha256Base64Url, sha256Hex } from "@utils/crypto.util";
 import { addDays } from "@utils/date.util";
 import { signAccessToken, verifyAccessToken } from "@utils/jwt.util";
 import { safeRedirectPath } from "@utils/url.util";
 
-const oauthFlowSchema = z.object({ state: z.string(), codeVerifier: z.string(), redirect: z.string(), app: z.enum(FRONTEND_APPS).default(FrontendAppEnum.web) });
+const oauthFlowSchema = z.object({
+  state: z.string(),
+  codeVerifier: z.string(),
+  redirect: z.string(),
+  app: z.enum(FRONTEND_APPS).default(FrontendAppEnum.web),
+});
 
 const MINUTE_MS = 60 * 1000;
 
@@ -181,13 +187,13 @@ export default class AuthService extends Service {
     return { user, sessionId: claims.sid };
   }
 
-  me(user: AuthUserType): ResponseType {
-    return this.success(UserDto.me(user));
+  async me(user: AuthUserType): Promise<ResponseType> {
+    return this.success(UserDto.me((await this.userRepository.findById(user.id)) ?? user));
   }
 
-  // User login mengubah nama profilnya sendiri. Dibaca ulang dari database supaya response memuat data terbaru.
-  async updateProfile(userId: number, name: string): Promise<ResponseType> {
-    await this.userRepository.update(userId, { name });
+  // User login mengubah profilnya sendiri. Dibaca ulang dari database supaya response memuat data terbaru.
+  async updateProfile(userId: number, input: UpdateProfileInputType): Promise<ResponseType> {
+    await this.userRepository.update(userId, { name: input.name, phone: input.phone, profession: input.profession });
     const user = await this.userRepository.findById(userId);
     if (!user) throw new UnauthorizedException();
     return this.success(UserDto.me(user), "Profile updated");
@@ -239,7 +245,13 @@ export default class AuthService extends Service {
     const sessionId = randomToken(24);
     const secret = randomToken();
     const now = new Date();
-    await this.sessionRepository.store({ id: sessionId, userId, refreshTokenHash: sha256Hex(secret), lastUsedAt: now, expiresAt: addDays(now, authConfig.sessionTtlDays) });
+    await this.sessionRepository.store({
+      id: sessionId,
+      userId,
+      refreshTokenHash: sha256Hex(secret),
+      lastUsedAt: now,
+      expiresAt: addDays(now, authConfig.sessionTtlDays),
+    });
     await this.sessionRepository.keepMostRecent(userId, authConfig.maxSessionsPerUser);
     return await this.issueTokens(userId, sessionId, secret);
   }

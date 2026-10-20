@@ -22,6 +22,8 @@ export const productVariants = mysqlTable("product_variants", {
   // true = harga jual diisi manual dan tidak ikut berubah saat markup diubah.
   priceLocked: boolean("price_locked").notNull().default(false),
   compareAtPrice: int("compare_at_price", { unsigned: true }),
+  // Harga promo; berlaku selama periode promo produk (products.sale_starts_at .. sale_ends_at). NULL = tidak ikut promo.
+  salePrice: int("sale_price", { unsigned: true }),
   weightGram: int("weight_gram", { unsigned: true }).notNull(),
   lengthCm: decimal("length_cm", { precision: 6, scale: 1, mode: "number" }),
   widthCm: decimal("width_cm", { precision: 6, scale: 1, mode: "number" }),

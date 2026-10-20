@@ -1,24 +1,33 @@
 export default {
   page_title: "Dashboard",
-  open: "Open",
-  coming_soon: "Coming soon",
+  load_error: "The summary could not be loaded",
   welcome: {
     title: "Welcome",
     title_named: "Hi, {name}!",
-    description: "Manage Ortic's warehouses, products, and orders from here.",
+    description: "Today's summary of the Ortic store.",
   },
-  steps: {
-    warehouses: {
-      title: "Warehouse settings",
-      description: "Fill in each warehouse's address, coordinates, and Biteship area so shipping can be quoted.",
-    },
-    products: {
-      title: "Products & stock",
-      description: "Add products, photos, variants, prices, weights, and stock per warehouse.",
-    },
-    orders: {
-      title: "Orders",
-      description: "Accept or reject orders, then a Biteship courier picks them up at the warehouse.",
-    },
+  kpi: {
+    today_orders: "Paid orders today",
+    today_revenue: "Revenue today",
+    today_profit: "Gross profit today",
+    week_orders: "Orders, 7 days",
+    week_revenue: "Revenue, 7 days",
+    week_profit: "Gross profit, 7 days",
+    profit_help: "Items − base cost + service fee − MDR",
+  },
+  chart: {
+    title: "Revenue, last 7 days",
+    orders: "{count} order(s)",
+  },
+  pending: {
+    title: "Needs attention",
+    all_clear: "Nothing is waiting.",
+    awaiting_confirmation: "Awaiting confirmation",
+    needs_action: "Needs action",
+    booking_failed: "Courier booking failed",
+    to_ship: "Ready to ship",
+    in_transit: "In transit",
+    refund_pending: "Refund pending",
+    low_stock: "Low / out of stock",
   },
 }

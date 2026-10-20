@@ -14,4 +14,8 @@ export default {
   checkout: "Checkout",
   checkout_note: "Pay with QRIS. Shipping is calculated at checkout.",
   clear: "Empty cart",
+  update_error: "Could not update the cart",
+  unavailable: "Out of stock / no longer sold",
+  stock_left: "{count} left",
+  remove_unavailable: "Remove out-of-stock items to continue to checkout.",
 }

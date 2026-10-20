@@ -1,5 +1,15 @@
 export default {
   title: "My account",
-  coming_soon: "Shipping addresses, WhatsApp number, and order history will appear here.",
+  name: "Name",
+  phone: "WhatsApp number",
+  phone_help: "Used for new addresses and by the courier.",
+  phone_invalid: "Number must be 8–15 digits",
+  profession: "Profession",
+  profession_placeholder: "Choose a profession",
+  save: "Save profile",
+  reset: "Cancel",
+  saved: "Profile saved",
+  save_error: "Could not save the profile",
+  orders: "My orders",
   logout: "Log out",
 }

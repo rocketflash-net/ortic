@@ -11,6 +11,7 @@ export type VariantForm = {
   price?: number
   price_locked: boolean
   compare_at_price?: number
+  sale_price?: number
   weight_gram?: number
   length_cm?: number
   width_cm?: number
@@ -32,6 +33,9 @@ export type ProductForm = {
   permit_number: string
   is_hazardous: boolean
   markup_percent?: number
+  /** Sale period as `datetime-local` values (browser time zone), "" = open-ended. */
+  sale_starts_at: string
+  sale_ends_at: string
   status: ProductStatus
   images: ImageForm[]
   variants: VariantForm[]
@@ -50,6 +54,8 @@ export const emptyProductForm = (): ProductForm => ({
   specs: [],
   permit_number: "",
   is_hazardous: false,
+  sale_starts_at: "",
+  sale_ends_at: "",
   status: "draft",
   images: [],
   variants: [emptyVariant()],
@@ -57,16 +63,44 @@ export const emptyProductForm = (): ProductForm => ({
 
 const orUndefined = <T>(value: T | null | undefined): T | undefined => value ?? undefined
 
+const HTML_ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }
+
+/** Older descriptions are plain text: turn blank-line paragraphs and line breaks into HTML for the editor. */
+export const descriptionToHtml = (value: string | null): string => {
+  if (!value) return ""
+  if (/<\/?[a-z][\s\S]*>/i.test(value)) return value
+  return value
+    .split(/\n{2,}/)
+    .map((paragraph) => `<p>${paragraph.trim().replace(/[&<>"']/g, (char) => HTML_ESCAPES[char]!).replace(/\n/g, "<br>")}</p>`)
+    .join("")
+}
+
+/** True when the editor HTML has no visible text (e.g. "<p></p>"). */
+const isBlankHtml = (html: string): boolean => html.replace(/<[^>]*>/g, "").replace(/&nbsp;/g, " ").trim() === ""
+
+/** ISO date -> `datetime-local` value in the browser's time zone. */
+export const isoToLocalInput = (iso: string | null): string => {
+  if (!iso) return ""
+  const date = new Date(iso)
+  const local = new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+  return local.toISOString().slice(0, 16)
+}
+
+/** `datetime-local` value -> ISO (UTC), or null when empty. */
+export const localInputToIso = (value: string): string | null => (value ? new Date(value).toISOString() : null)
+
 export const toProductForm = (product: ProductDetail): ProductForm => ({
   name: product.name,
   slug: product.slug,
   category_id: product.category_id,
   brand_id: orUndefined(product.brand_id),
-  description: product.description ?? "",
+  description: descriptionToHtml(product.description),
   specs: Object.entries(product.specifications ?? {}).map(([name, value]) => ({ key: rowKey(), name, value })),
   permit_number: product.permit_number ?? "",
   is_hazardous: product.is_hazardous,
   markup_percent: orUndefined(product.markup_percent),
+  sale_starts_at: isoToLocalInput(product.sale_starts_at),
+  sale_ends_at: isoToLocalInput(product.sale_ends_at),
   status: product.status,
   images: product.images.map((image) => ({ storage_key: image.storage_key, url: image.url })),
   variants: product.variants.map((variant) => ({
@@ -79,6 +113,7 @@ export const toProductForm = (product: ProductDetail): ProductForm => ({
     price: variant.price,
     price_locked: variant.price_locked,
     compare_at_price: orUndefined(variant.compare_at_price),
+    sale_price: orUndefined(variant.sale_price),
     weight_gram: variant.weight_gram,
     length_cm: orUndefined(variant.length_cm),
     width_cm: orUndefined(variant.width_cm),
@@ -102,11 +137,13 @@ export const toProductPayload = (form: ProductForm, canManagePrices: boolean): P
     slug: form.slug.trim(),
     category_id: form.category_id!,
     brand_id: form.brand_id ?? null,
-    description: blankToNull(form.description),
+    description: isBlankHtml(form.description) ? null : form.description,
     specifications: specs.length ? Object.fromEntries(specs.map((spec) => [spec.name.trim(), spec.value.trim()])) : null,
     permit_number: blankToNull(form.permit_number),
     is_hazardous: form.is_hazardous,
     ...(canManagePrices ? { markup_percent: form.markup_percent ?? null } : {}),
+    sale_starts_at: localInputToIso(form.sale_starts_at),
+    sale_ends_at: localInputToIso(form.sale_ends_at),
     status: form.status,
     images: form.images.map((image) => ({ storage_key: image.storage_key })),
     variants: form.variants.map((variant) => ({
@@ -120,6 +157,7 @@ export const toProductPayload = (form: ProductForm, canManagePrices: boolean): P
             markup_percent: variant.markup_percent ?? null,
             price: variant.price_locked ? (variant.price ?? undefined) : undefined,
             compare_at_price: variant.compare_at_price ?? null,
+            sale_price: variant.sale_price ?? null,
           }
         : variant.id === undefined
           ? { price: variant.price ?? undefined }

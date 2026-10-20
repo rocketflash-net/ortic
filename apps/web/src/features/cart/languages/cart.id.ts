@@ -14,4 +14,8 @@ export default {
   checkout: "Checkout",
   checkout_note: "Bayar dengan QRIS. Ongkir dihitung di halaman checkout.",
   clear: "Kosongkan keranjang",
+  update_error: "Keranjang gagal diperbarui",
+  unavailable: "Stok habis / tidak dijual lagi",
+  stock_left: "Sisa {count}",
+  remove_unavailable: "Hapus barang yang stoknya habis untuk melanjutkan checkout.",
 }

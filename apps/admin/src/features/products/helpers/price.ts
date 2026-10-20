@@ -11,6 +11,10 @@ export const sellingPrice = (basePrice: number, markupPercent: number, rounding:
   return Math.ceil(raw / step) * step
 }
 
-/** Markup that applies: variant, else product, else global. */
-export const effectiveMarkup = (variantMarkup: number | null | undefined, productMarkup: number | null | undefined, globalMarkup: number): number =>
-  variantMarkup ?? productMarkup ?? globalMarkup
+/** Markup that applies: variant, else product, else category, else global (same order as the API). */
+export const effectiveMarkup = (
+  variantMarkup: number | null | undefined,
+  productMarkup: number | null | undefined,
+  globalMarkup: number,
+  categoryMarkup: number | null | undefined = undefined,
+): number => variantMarkup ?? productMarkup ?? categoryMarkup ?? globalMarkup

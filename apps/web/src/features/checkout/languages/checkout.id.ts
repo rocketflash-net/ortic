@@ -34,7 +34,12 @@ export default {
   },
   items: {
     title: "Barang",
-    unavailable: "Ada barang yang sudah tidak dijual. Hapus dari keranjang lalu coba lagi.",
+    unavailable: "Ada barang yang stoknya tidak cukup atau sudah tidak dijual. Sesuaikan jumlahnya lalu coba lagi.",
+    not_sold: "Sudah tidak dijual",
+    out_of_stock: "Stok habis",
+    only_left: "Stok tinggal {count}",
+    fix: "Sesuaikan",
+    split: "Barang-barang ini ada di gudang yang berbeda. Checkout terpisah: hapus sebagian barang dulu, lalu pesan sisanya di pesanan berikutnya.",
   },
   shipping: {
     title: "Pengiriman",
@@ -58,5 +63,10 @@ export default {
     note: "QR berlaku 15 menit. Scan dari m-banking atau e-wallet apa pun.",
     choose_shipping: "Pilih pengiriman dulu",
     error: "Pesanan gagal dibuat",
+    agree_prefix: "Saya setuju dengan",
+    terms: "Syarat & Ketentuan",
+    and: "dan",
+    returns: "Kebijakan Retur",
+    agree_required: "Centang persetujuan Syarat & Ketentuan dulu.",
   },
 }

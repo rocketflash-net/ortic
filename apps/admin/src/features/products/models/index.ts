@@ -50,6 +50,8 @@ export type ProductVariant = {
   price: number
   price_locked: boolean
   compare_at_price: number | null
+  /** Promo price during the product's sale period. */
+  sale_price: number | null
   weight_gram: number
   length_cm: number | null
   width_cm: number | null
@@ -66,11 +68,15 @@ export type ProductDetail = {
   slug: string
   category_id: number
   brand_id: number | null
+  /** Sanitized HTML (older products may still hold plain text). */
   description: string | null
   specifications: Record<string, string> | null
   permit_number: string | null
   is_hazardous: boolean
   markup_percent?: number | null
+  /** Sale period of the variants' `sale_price` (ISO). Null = open-ended on that side. */
+  sale_starts_at: string | null
+  sale_ends_at: string | null
   status: ProductStatus
   images: ProductImage[]
   variants: ProductVariant[]
@@ -88,6 +94,7 @@ export type ProductVariantPayload = {
   price?: number
   price_locked: boolean
   compare_at_price?: number | null
+  sale_price?: number | null
   weight_gram: number
   length_cm: number | null
   width_cm: number | null
@@ -106,6 +113,9 @@ export type ProductPayload = {
   permit_number: string | null
   is_hazardous: boolean
   markup_percent?: number | null
+  /** ISO 8601 with offset, or null. Only applied for the Owner. */
+  sale_starts_at: string | null
+  sale_ends_at: string | null
   status: ProductStatus
   images: { storage_key: string }[]
   variants: ProductVariantPayload[]
@@ -115,6 +125,17 @@ export type ProductPayload = {
 export type PricingDefaults = { markup_percent: number; price_rounding: number }
 
 export type Brand = { id: number; name: string; slug: string }
+
+/** `POST /admin/products/import` result. Rows are 1-based CSV lines (line 1 = header). */
+export type ProductImportResult = {
+  rows: number
+  products_created: number
+  products_updated: number
+  variants_created: number
+  variants_updated: number
+  issues: { row: number; field: string; message: string }[]
+  dry_run: boolean
+}
 
 /** Active category from `GET /catalog/categories`. */
 export type Category = { id: number; parent_id: number | null; name: string; slug: string; color: string | null }

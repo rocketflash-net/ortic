@@ -16,8 +16,10 @@ import type { PricingDefaults } from "../models"
  */
 const props = defineProps<{
   canManagePrices: boolean
-  /** Product markup from the form; undefined = global. */
+  /** Product markup from the form; undefined = category / global. */
   productMarkup?: number
+  /** Markup of the chosen category (Owner); null/undefined = global. */
+  categoryMarkup?: number | null
   /** Global markup & rounding (Owner only). */
   pricing?: PricingDefaults
   /** API field errors keyed by path, e.g. `variants.0.sku`. */
@@ -27,11 +29,15 @@ const variants = defineModel<VariantForm[]>({ required: true })
 
 const currencyFormat = { style: "currency", currency: "IDR", maximumFractionDigits: 0 } as const
 
-const productOrGlobalMarkup = () => props.productMarkup ?? props.pricing?.markup_percent ?? 0
+const productOrGlobalMarkup = () => props.productMarkup ?? props.categoryMarkup ?? props.pricing?.markup_percent ?? 0
 
 const previewPrice = (variant: VariantForm): number | undefined => {
   if (variant.base_price === undefined || !props.pricing) return undefined
-  return sellingPrice(variant.base_price, effectiveMarkup(variant.markup_percent, props.productMarkup, props.pricing.markup_percent), props.pricing.price_rounding)
+  return sellingPrice(
+    variant.base_price,
+    effectiveMarkup(variant.markup_percent, props.productMarkup, props.pricing.markup_percent, props.categoryMarkup),
+    props.pricing.price_rounding,
+  )
 }
 
 const errorOf = (index: number, field: string) => props.errors[`variants.${index}.${field}`]
@@ -42,6 +48,13 @@ const add = () => {
 
 const remove = (index: number) => {
   variants.value = variants.value.filter((_, position) => position !== index)
+}
+
+// Mirrors the API rule so the mistake shows before saving.
+const saleError = (variant: VariantForm): string | undefined => {
+  const price = variant.price_locked ? variant.price : previewPrice(variant)
+  if (variant.sale_price === undefined || variant.sale_price === null || price === undefined) return undefined
+  return variant.sale_price >= price ? translate("features.products.form.variants.sale_price_too_high") : undefined
 }
 
 // Locking keeps the previewed price as the starting value.
@@ -124,7 +137,7 @@ const toggleLock = (variant: VariantForm, locked: boolean) => {
                 {{
                   translate("features.products.form.variants.price_auto", {
                     base: formatCurrency(variant.base_price),
-                    markup: formatNumber(effectiveMarkup(variant.markup_percent, productMarkup, pricing.markup_percent), "id-ID", 2),
+                    markup: formatNumber(effectiveMarkup(variant.markup_percent, productMarkup, pricing.markup_percent, categoryMarkup), "id-ID", 2),
                     rounding: formatNumber(pricing.price_rounding),
                   })
                 }}
@@ -133,6 +146,14 @@ const toggleLock = (variant: VariantForm, locked: boolean) => {
           </UFormField>
           <UFormField :label="translate('features.products.form.variants.compare_at_price')" :description="translate('features.products.form.variants.compare_at_help')" :error="errorOf(index, 'compare_at_price')">
             <UInputNumber v-model="variant.compare_at_price" :min="0" :step="500" :format-options="currencyFormat" locale="id-ID" class="w-full" />
+          </UFormField>
+          <UFormField
+            :label="translate('features.products.form.variants.sale_price')"
+            :description="translate('features.products.form.variants.sale_price_help')"
+            :error="errorOf(index, 'sale_price') ?? saleError(variant)"
+            class="sm:col-span-2"
+          >
+            <UInputNumber v-model="variant.sale_price" :min="0" :step="500" :format-options="currencyFormat" locale="id-ID" class="w-full sm:w-1/2" />
           </UFormField>
         </template>
 

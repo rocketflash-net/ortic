@@ -2,7 +2,7 @@
 
 Toko online alat kedokteran gigi Ortic Indonesia (ortic.id): pembeli login dengan Google atau OTP email, memilih barang, membayar dengan QRIS (BatPay), lalu kurir Biteship menjemput dari gudang Pekanbaru atau Medan. Admin mengelola produk, stok per gudang, pesanan, dan pengaturan dari dashboard.
 
-Kebutuhan produk dan progres pengerjaan: [`docs/PRD.md`](docs/PRD.md).
+Kebutuhan produk dan progres pengerjaan: [`docs/PRD.md`](docs/PRD.md). Rilis production: [`docs/DEPLOY.md`](docs/DEPLOY.md). Skenario demo/UAT: [`docs/UAT.md`](docs/UAT.md).
 
 ## Isi repository
 
@@ -14,6 +14,7 @@ Kebutuhan produk dan progres pengerjaan: [`docs/PRD.md`](docs/PRD.md).
 | `packages/shared` | Status pesanan, format Rupiah (dipakai ketiga aplikasi) | |
 | `packages/tsconfig` | Base tsconfig | |
 | `assets/brand` | Logo Ortic (SVG) | |
+| `deploy` | Nginx, PM2, script backup & uji restore database | |
 
 ## Menjalankan lokal
 
@@ -25,6 +26,7 @@ docker compose up -d                 # MySQL + MinIO (opsional: cukup MySQL loka
 cp apps/api/.env.example apps/api/.env   # isi DB_*; AUTH_DEV_LOGIN_CODE=123456 untuk OTP tetap saat development
 npm run db:migrate --workspace @ortic/api
 npm run db:seed --workspace @ortic/api   # gudang Pekanbaru, kurir JNE/J&T/SiCepat, pengaturan, kategori
+npm run db:seed:demo-stock --workspace @ortic/api   # (opsional, development) stok awal untuk produk showcase
 npm run admin --workspace @ortic/api -- grant you@example.com superadmin   # Owner pertama
 
 # Frontend

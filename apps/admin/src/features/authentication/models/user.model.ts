@@ -8,6 +8,8 @@ export type UserProfile = {
   /** Optional avatar image URL. Falls back to initials when omitted. */
   avatar?: string;
   role: string;
+  /** Staf tied to one warehouse (only sees its orders & stock); null = all warehouses. */
+  warehouseId: number | null;
 };
 
 /** Response of `GET /auth/me`: the user plus their RBAC access profile. */
@@ -17,6 +19,7 @@ export type MeResponse = {
   name: string;
   avatar_url: string | null;
   role: RoleKey;
+  warehouse_id: number | null;
   roles: RoleKey[];
   permissions: PermissionKey[];
 };

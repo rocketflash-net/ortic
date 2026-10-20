@@ -28,6 +28,7 @@ type ProductVariantResponseType = {
   price: number;
   price_locked: boolean;
   compare_at_price: number | null;
+  sale_price: number | null;
   weight_gram: number;
   length_cm: number | null;
   width_cm: number | null;
@@ -46,6 +47,8 @@ type ProductDetailResponseType = {
   permit_number: string | null;
   is_hazardous: boolean;
   markup_percent?: number | null;
+  sale_starts_at: Date | null;
+  sale_ends_at: Date | null;
   status: string;
   images: { id: number; storage_key: string; url: string }[];
   variants: ProductVariantResponseType[];
@@ -70,7 +73,12 @@ export default class ProductDto {
     };
   }
 
-  static detail(product: ProductType, variants: ProductVariantType[], images: ProductImageType[], { canSeeCost }: PriceVisibilityType): ProductDetailResponseType {
+  static detail(
+    product: ProductType,
+    variants: ProductVariantType[],
+    images: ProductImageType[],
+    { canSeeCost }: PriceVisibilityType
+  ): ProductDetailResponseType {
     return {
       id: product.id,
       name: product.name,
@@ -82,6 +90,8 @@ export default class ProductDto {
       permit_number: product.permitNumber,
       is_hazardous: product.isHazardous,
       ...(canSeeCost ? { markup_percent: product.markupPercent } : {}),
+      sale_starts_at: product.saleStartsAt,
+      sale_ends_at: product.saleEndsAt,
       status: product.status,
       images: images.map((image) => ({ id: image.id, storage_key: image.storageKey, url: image.url })),
       variants: variants.map((variant) => ProductDto.variant(variant, { canSeeCost })),
@@ -99,6 +109,7 @@ export default class ProductDto {
       price: variant.price,
       price_locked: variant.priceLocked,
       compare_at_price: variant.compareAtPrice,
+      sale_price: variant.salePrice,
       weight_gram: variant.weightGram,
       length_cm: variant.lengthCm,
       width_cm: variant.widthCm,

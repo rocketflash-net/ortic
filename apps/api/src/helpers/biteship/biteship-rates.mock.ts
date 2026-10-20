@@ -41,14 +41,106 @@ type MockServiceType = {
 
 // Daftar layanan dari GET /v1/couriers akun Ortic (2026-10-19).
 const SERVICES: MockServiceType[] = [
-  { courier_name: "JNE", courier_code: "jne", courier_service_name: "Reguler", courier_service_code: "reg", description: "Regular service", service_type: "standard", shipping_type: "parcel", rateFactor: 1, extraDays: 0, insurance: (v) => Math.ceil(v * 0.002) + 5000 },
-  { courier_name: "JNE", courier_code: "jne", courier_service_name: "YES", courier_service_code: "yes", description: "Express, next day", service_type: "overnight", shipping_type: "parcel", rateFactor: 1.8, extraDays: 0, maxZone: 3, insurance: (v) => Math.ceil(v * 0.002) + 5000 },
-  { courier_name: "JNE", courier_code: "jne", courier_service_name: "OKE", courier_service_code: "oke", description: "Economy servive", service_type: "standard", shipping_type: "parcel", rateFactor: 0.85, extraDays: 1, insurance: (v) => Math.ceil(v * 0.002) + 5000 },
-  { courier_name: "JNE", courier_code: "jne", courier_service_name: "JTR", courier_service_code: "jtr", description: "Trucking with minimum weight of 10 kg", service_type: "standard", shipping_type: "freight", rateFactor: 0.55, extraDays: 2, minKg: 10, insurance: (v) => Math.ceil(v * 0.002) + 5000 },
-  { courier_name: "J&T", courier_code: "jnt", courier_service_name: "EZ", courier_service_code: "ez", description: "Layanan reguler", service_type: "standard", shipping_type: "parcel", rateFactor: 0.97, extraDays: 0, insurance: (v) => Math.max(Math.ceil(v * 0.002), 1000) },
-  { courier_name: "SiCepat", courier_code: "sicepat", courier_service_name: "Reguler", courier_service_code: "reg", description: "Layanan reguler", service_type: "standard", shipping_type: "parcel", rateFactor: 0.95, extraDays: 0, insurance: (v) => Math.max(Math.ceil(v * 0.002), 1000) },
-  { courier_name: "SiCepat", courier_code: "sicepat", courier_service_name: "Best", courier_service_code: "best", description: "Besok sampai tujuan", service_type: "overnight", shipping_type: "parcel", rateFactor: 1.6, extraDays: 0, maxZone: 3, insurance: (v) => Math.max(Math.ceil(v * 0.002), 1000) },
-  { courier_name: "SiCepat", courier_code: "sicepat", courier_service_name: "GOKIL", courier_service_code: "gokil", description: "Layanan kargo", service_type: "standard", shipping_type: "freight", rateFactor: 0.5, extraDays: 2, minKg: 10, insurance: (v) => Math.max(Math.ceil(v * 0.002), 1000) },
+  {
+    courier_name: "JNE",
+    courier_code: "jne",
+    courier_service_name: "Reguler",
+    courier_service_code: "reg",
+    description: "Regular service",
+    service_type: "standard",
+    shipping_type: "parcel",
+    rateFactor: 1,
+    extraDays: 0,
+    insurance: (v) => Math.ceil(v * 0.002) + 5000,
+  },
+  {
+    courier_name: "JNE",
+    courier_code: "jne",
+    courier_service_name: "YES",
+    courier_service_code: "yes",
+    description: "Express, next day",
+    service_type: "overnight",
+    shipping_type: "parcel",
+    rateFactor: 1.8,
+    extraDays: 0,
+    maxZone: 3,
+    insurance: (v) => Math.ceil(v * 0.002) + 5000,
+  },
+  {
+    courier_name: "JNE",
+    courier_code: "jne",
+    courier_service_name: "OKE",
+    courier_service_code: "oke",
+    description: "Economy servive",
+    service_type: "standard",
+    shipping_type: "parcel",
+    rateFactor: 0.85,
+    extraDays: 1,
+    insurance: (v) => Math.ceil(v * 0.002) + 5000,
+  },
+  {
+    courier_name: "JNE",
+    courier_code: "jne",
+    courier_service_name: "JTR",
+    courier_service_code: "jtr",
+    description: "Trucking with minimum weight of 10 kg",
+    service_type: "standard",
+    shipping_type: "freight",
+    rateFactor: 0.55,
+    extraDays: 2,
+    minKg: 10,
+    insurance: (v) => Math.ceil(v * 0.002) + 5000,
+  },
+  {
+    courier_name: "J&T",
+    courier_code: "jnt",
+    courier_service_name: "EZ",
+    courier_service_code: "ez",
+    description: "Layanan reguler",
+    service_type: "standard",
+    shipping_type: "parcel",
+    rateFactor: 0.97,
+    extraDays: 0,
+    insurance: (v) => Math.max(Math.ceil(v * 0.002), 1000),
+  },
+  {
+    courier_name: "SiCepat",
+    courier_code: "sicepat",
+    courier_service_name: "Reguler",
+    courier_service_code: "reg",
+    description: "Layanan reguler",
+    service_type: "standard",
+    shipping_type: "parcel",
+    rateFactor: 0.95,
+    extraDays: 0,
+    insurance: (v) => Math.max(Math.ceil(v * 0.002), 1000),
+  },
+  {
+    courier_name: "SiCepat",
+    courier_code: "sicepat",
+    courier_service_name: "Best",
+    courier_service_code: "best",
+    description: "Besok sampai tujuan",
+    service_type: "overnight",
+    shipping_type: "parcel",
+    rateFactor: 1.6,
+    extraDays: 0,
+    maxZone: 3,
+    insurance: (v) => Math.max(Math.ceil(v * 0.002), 1000),
+  },
+  {
+    courier_name: "SiCepat",
+    courier_code: "sicepat",
+    courier_service_name: "GOKIL",
+    courier_service_code: "gokil",
+    description: "Layanan kargo",
+    service_type: "standard",
+    shipping_type: "freight",
+    rateFactor: 0.5,
+    extraDays: 2,
+    minKg: 10,
+    insurance: (v) => Math.max(Math.ceil(v * 0.002), 1000),
+  },
 ];
 
 // Tarif REG per kg dan durasi (hari) per zona: sekota, seprovinsi, sepulau, pulau tetangga, jauh, Maluku/Papua.
@@ -105,9 +197,12 @@ const POSTAL_PREFIXES: [number, number, string, string][] = [
 const NEIGHBOR_ISLANDS = new Set(["jawa:sumatera", "jawa:nusa", "jawa:kalimantan", "kalimantan:sulawesi", "nusa:sulawesi"]);
 
 const errorResult = (error: string, code: number): MockResultType => ({ status: 400, data: { success: false, error, code } });
-const missingParameter = () => errorResult("Get pricing failed caused by missing parameter(s). Please contact support@biteship.com for this problem.", 40001002);
-const invalidPostalCode = () => errorResult("Failed due to invalid or not available postal code. Please contact support@biteship.com for this matter.", 40001001);
-const noCourier = () => errorResult("No courier available for requested location. Please activate other courier option to receive other pricing rate.", 40001010);
+const missingParameter = () =>
+  errorResult("Get pricing failed caused by missing parameter(s). Please contact support@biteship.com for this problem.", 40001002);
+const invalidPostalCode = () =>
+  errorResult("Failed due to invalid or not available postal code. Please contact support@biteship.com for this matter.", 40001001);
+const noCourier = () =>
+  errorResult("No courier available for requested location. Please activate other courier option to receive other pricing rate.", 40001010);
 
 const isNumber = (value: unknown): value is number => typeof value === "number" && Number.isFinite(value);
 
@@ -173,10 +268,15 @@ const isValidItem = (item: Partial<BiteshipRateItemType>) =>
   typeof item?.name === "string" && item.name !== "" && isNumber(item.value) && isNumber(item.quantity) && item.quantity > 0 && isNumber(item.weight);
 
 const hasOrigin = (body: BiteshipRatesRequestType) =>
-  body.origin_area_id !== undefined || body.origin_postal_code !== undefined || (isNumber(body.origin_latitude) && isNumber(body.origin_longitude)) || body.type === "origin_suggestion_to_closest_destination";
+  body.origin_area_id !== undefined ||
+  body.origin_postal_code !== undefined ||
+  (isNumber(body.origin_latitude) && isNumber(body.origin_longitude)) ||
+  body.type === "origin_suggestion_to_closest_destination";
 
 const hasDestination = (body: BiteshipRatesRequestType) =>
-  body.destination_area_id !== undefined || body.destination_postal_code !== undefined || (isNumber(body.destination_latitude) && isNumber(body.destination_longitude));
+  body.destination_area_id !== undefined ||
+  body.destination_postal_code !== undefined ||
+  (isNumber(body.destination_latitude) && isNumber(body.destination_longitude));
 
 const mockRates = (body: BiteshipRatesRequestType): MockResultType => {
   if (!body || typeof body.couriers !== "string" || !Array.isArray(body.items) || body.items.length === 0) return missingParameter();
@@ -192,42 +292,42 @@ const mockRates = (body: BiteshipRatesRequestType): MockResultType => {
   const insuredValue = isNumber(body.courier_insurance) && body.courier_insurance > 0 ? body.courier_insurance : 0;
   const requested = new Set(body.couriers.split(",").map((code) => code.trim().toLowerCase()));
 
-  const pricing: BiteshipPricingType[] = SERVICES.filter((service) => requested.has(service.courier_code) && (service.maxZone === undefined || zone <= service.maxZone)).map(
-    (service) => {
-      const billedKg = Math.max(kg, service.minKg ?? 0);
-      const shippingFee = roundUp(ZONE_RATE_PER_KG[zone] * service.rateFactor * billedKg, 500);
-      const insuranceFee = insuredValue ? service.insurance(insuredValue) : 0;
-      const [minDays, maxDays] = service.maxZone !== undefined ? [1, 1] : ZONE_DAYS[zone].map((days) => days + service.extraDays);
-      const range = minDays === maxDays ? String(minDays) : `${minDays} - ${maxDays}`;
-      return {
-        available_collection_method: ["pickup"],
-        available_for_cash_on_delivery: false,
-        available_for_proof_of_delivery: false,
-        available_for_instant_waybill_id: true,
-        available_for_insurance: true,
-        company: service.courier_code,
-        courier_name: service.courier_name,
-        courier_code: service.courier_code,
-        courier_service_name: service.courier_service_name,
-        courier_service_code: service.courier_service_code,
-        currency: "IDR",
-        description: service.description,
-        duration: `${range} days`,
-        shipment_duration_range: range,
-        shipment_duration_unit: "days",
-        service_type: service.service_type,
-        shipping_type: service.shipping_type,
-        shipping_fee: shippingFee,
-        shipping_fee_discount: 0,
-        shipping_fee_surcharge: 0,
-        insurance_fee: insuranceFee,
-        cash_on_delivery_fee: 0,
-        price: shippingFee + insuranceFee,
-        tax_lines: [],
-        type: service.courier_service_code,
-      };
-    }
-  );
+  const pricing: BiteshipPricingType[] = SERVICES.filter(
+    (service) => requested.has(service.courier_code) && (service.maxZone === undefined || zone <= service.maxZone)
+  ).map((service) => {
+    const billedKg = Math.max(kg, service.minKg ?? 0);
+    const shippingFee = roundUp(ZONE_RATE_PER_KG[zone] * service.rateFactor * billedKg, 500);
+    const insuranceFee = insuredValue ? service.insurance(insuredValue) : 0;
+    const [minDays, maxDays] = service.maxZone !== undefined ? [1, 1] : ZONE_DAYS[zone].map((days) => days + service.extraDays);
+    const range = minDays === maxDays ? String(minDays) : `${minDays} - ${maxDays}`;
+    return {
+      available_collection_method: ["pickup"],
+      available_for_cash_on_delivery: false,
+      available_for_proof_of_delivery: false,
+      available_for_instant_waybill_id: true,
+      available_for_insurance: true,
+      company: service.courier_code,
+      courier_name: service.courier_name,
+      courier_code: service.courier_code,
+      courier_service_name: service.courier_service_name,
+      courier_service_code: service.courier_service_code,
+      currency: "IDR",
+      description: service.description,
+      duration: `${range} days`,
+      shipment_duration_range: range,
+      shipment_duration_unit: "days",
+      service_type: service.service_type,
+      shipping_type: service.shipping_type,
+      shipping_fee: shippingFee,
+      shipping_fee_discount: 0,
+      shipping_fee_surcharge: 0,
+      insurance_fee: insuranceFee,
+      cash_on_delivery_fee: 0,
+      price: shippingFee + insuranceFee,
+      tax_lines: [],
+      type: service.courier_service_code,
+    };
+  });
   if (pricing.length === 0) return noCourier();
 
   return {
@@ -244,4 +344,13 @@ const mockRates = (body: BiteshipRatesRequestType): MockResultType => {
   };
 };
 
-export { mockRates };
+// Layanan per kurir akun Ortic (GET /v1/couriers), untuk pilihan layanan di Manajemen Kurir.
+const knownCourierServices = (): Record<string, { code: string; name: string; description: string }[]> => {
+  const result: Record<string, { code: string; name: string; description: string }[]> = {};
+  for (const service of SERVICES) {
+    (result[service.courier_code] ??= []).push({ code: service.courier_service_code, name: service.courier_service_name, description: service.description });
+  }
+  return result;
+};
+
+export { mockRates, knownCourierServices };

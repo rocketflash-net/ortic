@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { biteshipLimiter } from "@config/rate-limit.config";
+import * as cart from "@controllers/cart.controller";
 import * as order from "@controllers/order.controller";
 import PermissionEnum from "@enums/permission.enum";
 import { requirePermission as can } from "@middleware/auth.middleware";
@@ -11,6 +12,12 @@ router.get("/me/addresses", order.addresses);
 router.post("/me/addresses", order.storeAddress);
 router.put("/me/addresses/:id", order.updateAddress);
 router.delete("/me/addresses/:id", order.destroyAddress);
+
+// Keranjang server (tersinkron di semua perangkat).
+router.get("/cart", can(PermissionEnum.orders_create), cart.show);
+router.put("/cart/items", can(PermissionEnum.orders_create), cart.setItem);
+router.post("/cart/merge", can(PermissionEnum.orders_create), cart.merge);
+router.delete("/cart", can(PermissionEnum.orders_create), cart.clear);
 
 // Quote & checkout memanggil API ongkir Biteship (ditagih per panggilan), jadi ikut dibatasi.
 router.post("/checkout/quote", can(PermissionEnum.orders_create), biteshipLimiter, order.quote);

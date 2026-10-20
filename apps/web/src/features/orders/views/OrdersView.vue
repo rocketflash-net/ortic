@@ -27,9 +27,17 @@ const total = computed(() => ordersQuery.data.value?.additionalInfo.pagination.t
 
 <template>
   <section class="mx-auto max-w-3xl px-4 py-8">
-    <h1 class="font-display text-4xl tracking-wide text-ortic-ink sm:text-5xl">{{ translate("features.orders.title") }}</h1>
+    <h1 class="font-display text-4xl tracking-wide text-ortic-ink sm:text-5xl">
+      {{ translate("features.orders.title") }}
+    </h1>
 
-    <QueryErrorAlert v-if="ordersQuery.isError.value" class="mt-6" :title="translate('features.orders.load_error')" :error="ordersQuery.error.value" @retry="ordersQuery.refetch()" />
+    <QueryErrorAlert
+      v-if="ordersQuery.isError.value"
+      class="mt-6"
+      :title="translate('features.orders.load_error')"
+      :error="ordersQuery.error.value"
+      @retry="ordersQuery.refetch()"
+    />
 
     <div v-else-if="ordersQuery.isPending.value" class="mt-6 space-y-3">
       <USkeleton v-for="n in 3" :key="n" class="h-20 w-full rounded-xl" />
@@ -37,7 +45,9 @@ const total = computed(() => ordersQuery.data.value?.additionalInfo.pagination.t
 
     <div v-else-if="orders.length === 0" class="mt-8 rounded-xl border-2 border-dashed border-ortic-ink/40 p-10 text-center">
       <UIcon name="i-lucide-package" class="size-10 text-zinc-400" />
-      <p class="mt-3 font-semibold text-ortic-ink">{{ translate("features.orders.empty_title") }}</p>
+      <p class="mt-3 font-semibold text-ortic-ink">
+        {{ translate("features.orders.empty_title") }}
+      </p>
       <p class="text-sm text-muted">{{ translate("features.orders.empty_description") }}</p>
       <UButton :to="{ name: CatalogPageName.PRODUCTS }" :label="translate('features.orders.shop')" color="secondary" class="btn-comic mt-4 text-ortic-ink" />
     </div>
@@ -53,9 +63,17 @@ const total = computed(() => ordersQuery.data.value?.additionalInfo.pagination.t
               <img v-if="order.first_item?.image_url" :src="order.first_item.image_url" alt="" class="size-full object-contain p-1" />
             </div>
             <div class="min-w-0 flex-1">
-              <p class="truncate font-semibold text-ortic-ink">{{ order.first_item?.product_name }}</p>
-              <p class="text-sm text-muted">{{ order.code }} · {{ translate("features.orders.items", { count: order.item_count }) }}</p>
+              <p class="truncate font-semibold text-ortic-ink">
+                {{ order.first_item?.product_name }}
+              </p>
+              <p class="text-sm text-muted">
+                {{ order.code }} ·
+                {{ translate("features.orders.items", { count: order.item_count }) }}
+              </p>
               <p class="text-xs text-muted">{{ formatDateTime(order.created_at) }}</p>
+              <p v-if="order.waybill_id" class="flex items-center gap-1 text-xs font-medium text-ortic-blue">
+                <UIcon name="i-lucide-truck" class="size-3.5" />{{ translate("features.orders.waybill", { waybill: order.waybill_id }) }}
+              </p>
             </div>
             <div class="flex shrink-0 flex-col items-end gap-1">
               <OrderStatusBadge :status="order.status" />

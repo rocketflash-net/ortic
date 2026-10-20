@@ -25,7 +25,7 @@ function getInitials(name: string): string {
 }
 
 function toUserProfile(me: MeResponse): UserProfile {
-  return { id: me.id, name: me.name, email: me.email, avatar: me.avatar_url ?? undefined, role: me.role };
+  return { id: me.id, name: me.name, email: me.email, avatar: me.avatar_url ?? undefined, role: me.role, warehouseId: me.warehouse_id ?? null };
 }
 
 /**

@@ -14,7 +14,10 @@ import QueryErrorAlert from "@/shared/components/QueryErrorAlert.vue"
 import { useDateFormatter } from "@/shared/composables/useDateFormatter"
 import { getApiErrorMessage } from "@/shared/helpers/error"
 
+import { getWarehouses, warehouseQueryKeys } from "@/features/warehouses/services/api"
+
 import AddAdminModal from "../components/AddAdminModal.vue"
+import AssignWarehouseModal from "../components/AssignWarehouseModal.vue"
 import type { AdminUser } from "../models"
 import { adminUserQueryKeys, getAdminUsers, updateUserRole } from "../services/api"
 
@@ -33,6 +36,13 @@ const { showToast } = useAppToast()
 const overlay = useOverlay()
 const addModal = overlay.create(AddAdminModal)
 const confirmModal = overlay.create(ConfirmModal)
+const warehouseModal = overlay.create(AssignWarehouseModal)
+
+const warehousesQuery = useQuery({ queryKey: warehouseQueryKeys.all, queryFn: getWarehouses, select: (response) => response.data ?? [] })
+const warehouseName = (admin: AdminUser) =>
+  admin.warehouse_id === null
+    ? translate("features.adminUsers.warehouse.all")
+    : (warehousesQuery.data.value?.find((warehouse) => warehouse.id === admin.warehouse_id)?.name ?? `#${admin.warehouse_id}`)
 
 const adminsQuery = useQuery({
   queryKey: adminUserQueryKeys.all,
@@ -84,6 +94,9 @@ const actionsFor = (admin: AdminUser): DropdownMenuItem[][] => {
         onSelect: () => confirmRoleChange(admin, otherRole),
       },
     ],
+    ...(admin.role === "admin"
+      ? [[{ label: translate("features.adminUsers.warehouse.action"), icon: "i-lucide-warehouse", onSelect: () => warehouseModal.open({ admin }) }]]
+      : []),
     [
       {
         label: translate("features.adminUsers.change.user_action"),
@@ -106,6 +119,7 @@ const columns: TableColumn<AdminUser>[] = [
   // `max-w-0` + `w-full` lets long names and emails truncate instead of pushing the other columns off screen.
   { accessorKey: "name", header: translate("features.adminUsers.table.admin"), meta: { class: { td: "w-full max-w-0" } } },
   { accessorKey: "role", header: translate("features.adminUsers.table.role") },
+  { accessorKey: "warehouse_id", header: translate("features.adminUsers.table.warehouse"), meta: { class: { th: "hidden md:table-cell", td: "hidden md:table-cell" } } },
   { accessorKey: "created_at", header: translate("features.adminUsers.table.joined"), meta: { class: { th: "hidden sm:table-cell", td: "hidden sm:table-cell" } } },
   { id: "actions", meta: { class: { td: "w-px whitespace-nowrap" } } },
 ]
@@ -167,6 +181,11 @@ const columns: TableColumn<AdminUser>[] = [
             :color="row.original.role === 'superadmin' ? 'primary' : 'neutral'"
             variant="subtle"
           />
+        </template>
+
+        <template #warehouse_id-cell="{ row }">
+          <span v-if="row.original.role === 'admin'" class="text-toned">{{ warehouseName(row.original) }}</span>
+          <span v-else class="text-muted">–</span>
         </template>
 
         <template #created_at-cell="{ row }">

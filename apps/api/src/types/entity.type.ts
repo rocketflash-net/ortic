@@ -1,9 +1,12 @@
 import { auditLogs } from "@models/audit-log.model";
 import { authExchangeCodes } from "@models/auth-exchange-code.model";
 import { brands } from "@models/brand.model";
+import { cartItems } from "@models/cart-item.model";
 import { categories } from "@models/category.model";
 import { couriers } from "@models/courier.model";
 import { emailLoginCodes } from "@models/email-login-code.model";
+import { notifications } from "@models/notification.model";
+import { orderEvents } from "@models/order-event.model";
 import { orderItems } from "@models/order-item.model";
 import { orders } from "@models/order.model";
 import { productImages } from "@models/product-image.model";
@@ -73,6 +76,15 @@ type NewOrderType = typeof orders.$inferInsert;
 type OrderItemType = typeof orderItems.$inferSelect;
 type NewOrderItemType = typeof orderItems.$inferInsert;
 
+type OrderEventType = typeof orderEvents.$inferSelect;
+type NewOrderEventType = typeof orderEvents.$inferInsert;
+
+type CartItemType = typeof cartItems.$inferSelect;
+type NewCartItemType = typeof cartItems.$inferInsert;
+
+type NotificationType = typeof notifications.$inferSelect;
+type NewNotificationType = typeof notifications.$inferInsert;
+
 export type {
   UserType,
   NewUserType,
@@ -110,4 +122,10 @@ export type {
   NewOrderType,
   OrderItemType,
   NewOrderItemType,
+  OrderEventType,
+  NewOrderEventType,
+  CartItemType,
+  NewCartItemType,
+  NotificationType,
+  NewNotificationType,
 };

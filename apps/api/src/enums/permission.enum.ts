@@ -18,6 +18,8 @@ const PermissionEnum = {
   // Terima/tolak pesanan, booking kurir, refund.
   orders_manage: "orders:manage",
   transactions_read: "transactions:read",
+  // Laporan penjualan & stok. Laba (butuh harga dasar) hanya untuk yang punya prices:manage.
+  reports_read: "reports:read",
   // Simulasi pembayaran QRIS provider mock (hanya tersedia di luar production).
   payments_simulate: "payments:simulate",
   media_upload: "media:upload",
