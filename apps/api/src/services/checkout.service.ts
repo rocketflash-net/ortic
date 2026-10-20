@@ -13,6 +13,7 @@ import ShippingProviderException from "@exceptions/shipping-provider.exception";
 import ValidationException from "@exceptions/validation.exception";
 import BiteshipHelper from "@helpers/biteship/biteship-api.helper";
 import { createPaymentGateway } from "@helpers/payment/payment-gateway.factory";
+import { qrisInFlight } from "@helpers/payment/qris-in-flight.helper";
 import CartRepository from "@repositories/cart.repository";
 import CatalogRepository from "@repositories/catalog.repository";
 import CourierRepository from "@repositories/courier.repository";
@@ -198,6 +199,8 @@ export default class CheckoutService extends Service {
     });
 
     // QRIS dibuat setelah order tersimpan (butuh id). Gagal = order dibatalkan & stok dilepas, pembeli bisa checkout lagi.
+    // Bila proses berhenti di tengah langkah ini, OrderService.show membuat QRIS-nya saat pembeli membuka pesanan.
+    qrisInFlight.add(orderId);
     try {
       const qris = await gateway.createQris({ orderId, amount: total, expiresAt });
       await this.orderRepository.update(orderId, {
@@ -215,6 +218,8 @@ export default class CheckoutService extends Service {
       });
       await this.stockService.releaseOrder((await this.orderRepository.findById(orderId))!);
       throw error instanceof PaymentProviderException ? error : new PaymentProviderException();
+    } finally {
+      qrisInFlight.delete(orderId);
     }
 
     const order = (await this.orderRepository.findById(orderId))!;

@@ -116,8 +116,8 @@ const timeline = computed(() => [...(order.value?.events ?? [])].reverse())
       </div>
 
       <template v-else>
-        <!-- Status & actions -->
-        <UCard>
+        <!-- Status & actions; shrink-0 so the scrolling panel body doesn't squash it on narrow/zoomed screens -->
+        <UCard class="shrink-0">
           <div class="flex flex-wrap items-center justify-between gap-4">
             <div>
               <div class="flex flex-wrap items-center gap-2">
@@ -149,19 +149,22 @@ const timeline = computed(() => [...(order.value?.events ?? [])].reverse())
                 color="warning"
                 @click="refundModal.open({ code, amount: order.refund.amount ?? order.total })"
               />
+              <UButton
+                v-if="order.can.simulate_shipping"
+                :label="translate('features.orders.actions.simulate')"
+                icon="i-lucide-step-forward"
+                color="info"
+                :loading="simulateMutation.isPending.value"
+                @click="simulateMutation.mutate()"
+              />
               <UButton v-if="order.can.reject" :label="translate('features.orders.actions.reject')" icon="i-lucide-x" color="error" variant="soft" @click="rejectModal.open({ code })" />
             </div>
           </div>
 
-          <UAlert
-            v-if="order.can.simulate_shipping"
-            class="mt-4"
-            color="info"
-            variant="subtle"
-            icon="i-lucide-flask-conical"
-            :description="translate('features.orders.actions.simulate_help')"
-            :actions="[{ label: translate('features.orders.actions.simulate'), icon: 'i-lucide-step-forward', loading: simulateMutation.isPending.value, onClick: () => simulateMutation.mutate() }]"
-          />
+          <p v-if="order.can.simulate_shipping" class="mt-3 flex items-center gap-1.5 text-xs text-muted">
+            <UIcon name="i-lucide-flask-conical" class="size-3.5 shrink-0" />
+            {{ translate("features.orders.actions.simulate_help") }}
+          </p>
           <UAlert
             v-if="order.refund.status === 'pending'"
             class="mt-4"
@@ -181,7 +184,7 @@ const timeline = computed(() => [...(order.value?.events ?? [])].reverse())
           />
         </UCard>
 
-        <div class="grid gap-4 lg:grid-cols-3">
+        <div class="grid shrink-0 gap-4 lg:grid-cols-3">
           <div class="space-y-4 lg:col-span-2">
             <!-- Items & totals -->
             <UCard :ui="{ body: 'p-0 sm:p-0' }">

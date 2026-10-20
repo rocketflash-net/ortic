@@ -217,6 +217,7 @@ Endpoint yang sudah ada:
 ## Changelog
 
 ### 2026-10-20
+- Perbaikan hasil uji: (1) pesanan yang tersimpan tanpa QRIS (API berhenti di tengah checkout) kini dibuatkan QRIS baru saat dibuka, web menampilkan "Menyiapkan kode QRIS…"; (2) status pembayaran di daftar & detail pesanan (pembeli dan admin, termasuk jumlah per status) selalu sama: disinkronkan ke BatPay dan QR kedaluwarsa langsung dibatalkan (tanpa jeda 2 menit; pembayaran terlambat tetap diterima); (3) admin: tombol aksi pesanan & banner beranda tidak lagi hilang saat layar di-zoom.
 - Fase 1–3 diselesaikan + persiapan Fase 4 (branch `feat/complete-mvp`). Migration `0003_fulfillment_stock_cart` (stok pesanan, refund, pengiriman Biteship, riwayat pesanan, keranjang server, notifikasi, harga promo, markup kategori, harga dasar di baris pesanan) dan `0004_audit_user_warehouse`.
 - Stok per gudang: reservasi saat checkout, potong saat lunas, lepas saat batal/kedaluwarsa, kembali saat ditolak/retur (`orders.stock_state`, compare-and-set). Admin: stok masuk, opname, transfer, batas menipis, kartu stok, notifikasi stok menipis. Seeder `db:seed:demo-stock` untuk showcase.
 - Checkout: alokasi gudang (stok lengkap + ongkir termurah), cache ongkir 24 jam, keranjang server + gabung keranjang tamu, harga promo, centang S&K.

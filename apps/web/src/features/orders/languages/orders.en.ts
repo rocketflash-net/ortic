@@ -25,6 +25,7 @@ export default {
     not_found: "Order not found",
     pay_title: "Scan the QRIS to pay",
     pay_steps: "Open your mobile banking or e-wallet app, choose Scan QR / QRIS, and scan the code below.",
+    qr_preparing: "Preparing the QRIS code…",
     expires_in: "Pay within {time}",
     expired: "The QR code has expired",
     expired_hint: "The order will be cancelled automatically. Please check out again.",

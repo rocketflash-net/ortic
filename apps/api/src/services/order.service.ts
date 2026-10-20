@@ -2,6 +2,7 @@ import Service from "@base/service.base";
 import { isProduction } from "@config/app.config";
 import { logger } from "@config/logger.config";
 import { orderConfig } from "@config/order.config";
+import { paymentConfig } from "@config/payment.config";
 import OrderDto from "@dto/order.dto";
 import NotificationTypeEnum from "@enums/notification-type.enum";
 import OrderEventTypeEnum from "@enums/order-event-type.enum";
@@ -9,6 +10,7 @@ import OrderStatusEnum, { OrderStatusType } from "@enums/order-status.enum";
 import BadRequestException from "@exceptions/bad-request.exception";
 import NotFoundException from "@exceptions/not-found.exception";
 import { createPaymentGateway } from "@helpers/payment/payment-gateway.factory";
+import { qrisInFlight } from "@helpers/payment/qris-in-flight.helper";
 import OrderEventRepository from "@repositories/order-event.repository";
 import OrderRepository from "@repositories/order.repository";
 import NotificationService from "@services/notification.service";
@@ -24,8 +26,6 @@ import { buildPaginationMeta, toPaginationOptions } from "@utils/pagination.util
 
 // Halaman bayar polling tiap 3 detik; status ke provider ditanyakan paling sering sekali per interval ini per order.
 const QUERY_INTERVAL_MS = 5000;
-// Order baru dibatalkan sedikit setelah QR kedaluwarsa, supaya pembayaran di detik terakhir masih tercatat.
-const EXPIRY_GRACE_MS = 2 * 60 * 1000;
 
 /**
  * Pesanan pembeli dan status pembayarannya. Notifikasi pembayaran (webhook provider, polling halaman bayar, job
@@ -46,10 +46,12 @@ export default class OrderService extends Service {
   }
 
   async list(userId: number, pagination: PaginationQueryType): Promise<ResponseType> {
-    const [orders, total] = await Promise.all([
+    const [stored, total] = await Promise.all([
       this.orderRepository.findByUser(userId, toPaginationOptions(pagination)),
       this.orderRepository.countByUser(userId),
     ]);
+    // Status di daftar harus sama dengan di detail pesanan.
+    const orders = await Promise.all(stored.map((order) => this.refreshUnpaid(order)));
     const items = await this.orderRepository.findItems(orders.map((order) => order.id));
     return this.success(
       orders.map((order) =>
@@ -66,8 +68,7 @@ export default class OrderService extends Service {
 
   // Detail pesanan. Selama menunggu pembayaran, status ditanyakan ke provider (cadangan bila webhook tidak sampai).
   async show(userId: number, code: string): Promise<ResponseType> {
-    let order = await this.findOwnedOrFail(userId, code);
-    if (order.status === OrderStatusEnum.awaiting_payment) order = await this.syncPayment(order);
+    const order = await this.refreshUnpaid(await this.findOwnedOrFail(userId, code));
     return this.success(await this.detail(order));
   }
 
@@ -192,24 +193,49 @@ export default class OrderService extends Service {
    * Mengembalikan jumlah order yang dibatalkan.
    */
   async expireUnpaid(now: Date = new Date()): Promise<number> {
-    const expired = await this.orderRepository.findExpiredUnpaid(new Date(now.getTime() - EXPIRY_GRACE_MS));
+    const expired = await this.orderRepository.findExpiredUnpaid(now);
     let cancelled = 0;
     for (const order of expired) {
       const synced = await this.syncPayment(order, true);
-      if (synced.status !== OrderStatusEnum.awaiting_payment) continue;
-      const changed = await this.orderRepository.transition(order.id, [OrderStatusEnum.awaiting_payment], {
-        status: OrderStatusEnum.cancelled,
-        cancelledAt: now,
-        cancelReason: "QRIS kedaluwarsa",
-      });
-      if (changed) {
-        cancelled += 1;
-        await this.stockService.releaseOrder(order);
-        await this.recordStatus(order.id, OrderStatusEnum.cancelled, "Pesanan dibatalkan", "QRIS kedaluwarsa sebelum dibayar");
-        await this.cancelQris(order, "QRIS expired");
-      }
+      if (await this.cancelExpired(synced, now)) cancelled += 1;
     }
     return cancelled;
+  }
+
+  // Sinkronkan semua order yang menunggu pembayaran (opsional per gudang) sebelum daftar pesanan admin dibaca.
+  async refreshAwaitingPayment(warehouseId?: number | null): Promise<void> {
+    const awaiting = await this.orderRepository.findAwaitingPayment(warehouseId);
+    await Promise.all(awaiting.map((order) => this.refreshUnpaid(order)));
+  }
+
+  /**
+   * Status terkini order yang menunggu pembayaran, dipakai daftar & detail pesanan (pembeli dan admin) supaya selalu sama:
+   * QRIS yang belum terbuat dipulihkan, status ditanyakan ke provider, dan order yang QR-nya sudah lewat masa berlaku
+   * langsung dibatalkan setelah dipastikan belum dibayar (pembayaran yang terlambat masuk tetap diterima applyPayment).
+   */
+  async refreshUnpaid(order: OrderType): Promise<OrderType> {
+    if (order.status !== OrderStatusEnum.awaiting_payment) return order;
+    const expired = order.expiresAt !== null && order.expiresAt <= new Date();
+    if (!order.providerRef) order = await this.recoverQris(order);
+    else order = await this.syncPayment(order, expired);
+    if (!expired) return order;
+    await this.cancelExpired(order);
+    return (await this.orderRepository.findById(order.id))!;
+  }
+
+  // Batalkan order yang QR-nya kedaluwarsa bila masih belum dibayar (pemanggil sudah menanyakan status ke provider).
+  private async cancelExpired(order: OrderType, now: Date = new Date()): Promise<boolean> {
+    if (order.status !== OrderStatusEnum.awaiting_payment) return false;
+    const changed = await this.orderRepository.transition(order.id, [OrderStatusEnum.awaiting_payment], {
+      status: OrderStatusEnum.cancelled,
+      cancelledAt: now,
+      cancelReason: "QRIS kedaluwarsa",
+    });
+    if (!changed) return false;
+    await this.stockService.releaseOrder(order);
+    await this.recordStatus(order.id, OrderStatusEnum.cancelled, "Pesanan dibatalkan", "QRIS kedaluwarsa sebelum dibayar");
+    await this.cancelQris(order, "QRIS expired");
+    return true;
   }
 
   async findByProviderRef(provider: string, providerRef: string): Promise<OrderType | null> {
@@ -232,6 +258,42 @@ export default class OrderService extends Service {
     } catch (error) {
       logger.warn({ err: error, orderId: order.id }, "[order] payment status query failed");
       return order;
+    }
+  }
+
+  /**
+   * Order tersimpan tanpa QRIS (proses API berhenti di antara simpan order dan buat QRIS saat checkout): QRIS dibuat
+   * saat pembeli membuka pesanannya, dengan masa berlaku baru. Order yang sudah kedaluwarsa dibiarkan untuk job
+   * kedaluwarsa. Gagal = order apa adanya; halaman bayar mencoba lagi atau pembeli membatalkan.
+   */
+  private async recoverQris(order: OrderType): Promise<OrderType> {
+    if (qrisInFlight.has(order.id) || (order.expiresAt && order.expiresAt <= new Date())) return order;
+    qrisInFlight.add(order.id);
+    try {
+      const gateway = createPaymentGateway(order.paymentProvider);
+      const qris = await gateway.createQris({
+        orderId: order.id,
+        amount: order.total,
+        expiresAt: new Date(Date.now() + paymentConfig.orderTtlMinutes * 60 * 1000),
+      });
+      const attached = await this.orderRepository.attachQris(order.id, {
+        providerRef: qris.providerRef,
+        providerTransactionId: qris.providerTransactionId,
+        qrString: qris.qrString,
+        expiresAt: qris.expiresAt,
+      });
+      if (attached) {
+        logger.info({ orderId: order.id }, "[order] missing QRIS recreated");
+      } else {
+        // Order berubah di tengah jalan (dibatalkan/sudah punya QRIS): QR baru tidak dipakai.
+        await this.cancelQris({ ...order, providerRef: qris.providerRef, providerTransactionId: qris.providerTransactionId }, "Unused QRIS");
+      }
+      return (await this.orderRepository.findById(order.id))!;
+    } catch (error) {
+      logger.warn({ err: error, orderId: order.id }, "[order] recreating missing QRIS failed");
+      return order;
+    } finally {
+      qrisInFlight.delete(order.id);
     }
   }
 

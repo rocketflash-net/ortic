@@ -25,6 +25,7 @@ export default {
     not_found: "Pesanan tidak ditemukan",
     pay_title: "Scan QRIS untuk membayar",
     pay_steps: "Buka aplikasi m-banking atau e-wallet, pilih Scan QR / QRIS, lalu scan kode di bawah.",
+    qr_preparing: "Menyiapkan kode QRIS…",
     expires_in: "Bayar dalam {time}",
     expired: "QR sudah kedaluwarsa",
     expired_hint: "Pesanan akan dibatalkan otomatis. Silakan checkout ulang.",
